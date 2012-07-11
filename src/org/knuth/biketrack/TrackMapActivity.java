@@ -94,7 +94,7 @@ public class TrackMapActivity extends MapActivity {
                 controller.animateTo(start);
                 controller.setZoom(19);
             }
-            progress.hide();
+            progress.dismiss();
         }
     }
 
