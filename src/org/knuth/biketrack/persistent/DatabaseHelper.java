@@ -21,7 +21,7 @@ import java.sql.SQLException;
 public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
     private final static String DB_NAME = "bike_track.db";
-    private final static int DB_VERSION = 3;
+    private final static int DB_VERSION = 4;
 
     private Dao<LocationStamp, Void> cached_dao;
 

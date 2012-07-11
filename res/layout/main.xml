@@ -13,13 +13,7 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:text="Start tracking"
-    android:onClick="startTracking"
-    />
-<Button
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:text="Stop tracking!"
-    android:onClick="stopTracking"
+    android:id="@+id/tracking_start_stop"
     />
 <EditText
     android:layout_height="fill_parent"
