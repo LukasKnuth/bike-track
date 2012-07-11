@@ -15,12 +15,6 @@ import org.knuth.biketrack.persistent.DatabaseHelper;
 
 public class Main extends OrmLiteBaseActivity<DatabaseHelper> {
 
-    // TODO Add possibility to create a "Tour", which capsules multiple LocationStamps
-    // TODO Create a clearer data-view (for tours) including average speed, track-length, etc.
-    // TODO Add charts for all collected data (AchartEngine, JavaDoc for ChartFactory).
-    // TODO Add a context-menu and use the ActionBar
-    // TODO Add measuring altitude (see http://stackoverflow.com/questions/6141390)
-
     /** The Tag to use when logging from this application! */
     public static final String LOG_TAG = "BikeTrack";
 
