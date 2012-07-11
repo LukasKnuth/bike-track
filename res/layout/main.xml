@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<TextView
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:text="Tracking your bike-tour, made easy."
+    />
+<Button
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:text="Start tracking"
+    android:onClick="startTracking"
+    />
+<Button
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:text="Stop tracking!"
+    android:onClick="stopTracking"
+    />
+<EditText
+    android:layout_height="fill_parent"
+    android:layout_width="fill_parent"
+    android:id="@+id/log"
+    android:textIsSelectable="false"
+    android:editable="false"
+    android:inputType="textMultiLine|textNoSuggestions"
+    android:focusable="false"
+
+    />
+</LinearLayout>
+
