@@ -15,6 +15,7 @@ public class DatabaseConfigUtil extends OrmLiteConfigUtil {
 
     private static final Class<?>[] classes = new Class[] {
             LocationStamp.class,
+            Tour.class
     };
 
     public static void main(String[] args) throws Exception {

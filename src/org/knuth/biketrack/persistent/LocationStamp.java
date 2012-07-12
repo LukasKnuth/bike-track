@@ -21,16 +21,19 @@ public class LocationStamp {
     private Date timestamp;
     @DatabaseField
     private int speed;
+    @DatabaseField(foreign = true)
+    private Tour tour;
 
     // TODO Add the altitude (use air pressure)
 
     public LocationStamp(){}
 
-    public LocationStamp(int latitudeE6, int longitudeE6, Date timestamp, int speed){
+    public LocationStamp(int latitudeE6, int longitudeE6, Date timestamp, int speed, Tour tour){
         this.latitudeE6 = latitudeE6;
         this.longitudeE6 = longitudeE6;
         this.timestamp = timestamp;
         this.speed = speed;
+        this.tour = tour;
     }
 
     /**

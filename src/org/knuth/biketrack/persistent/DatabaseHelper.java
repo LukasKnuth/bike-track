@@ -21,9 +21,10 @@ import java.sql.SQLException;
 public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
     private final static String DB_NAME = "bike_track.db";
-    private final static int DB_VERSION = 4;
+    private final static int DB_VERSION = 5;
 
-    private Dao<LocationStamp, Void> cached_dao;
+    private Dao<LocationStamp, Void> location_dao;
+    private Dao<Tour, Integer> tour_dao;
 
     public DatabaseHelper(Context context){
         super(context, DB_NAME, null, DB_VERSION, R.raw.ormlite_config);
@@ -33,21 +34,37 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
      * Get a (cached) DAO-instance to work with {@code LocationStamp}-classes.
      * @return the (cached) DAO.
      */
+    public Dao<LocationStamp, Void> getLocationStampDao() throws SQLException {
+        if (location_dao == null) location_dao = getDao(LocationStamp.class);
+        return location_dao;
+    }
+
+    // TODO Remove this. Just to make commit comile!
     public Dao<LocationStamp, Void> getDao() throws SQLException {
-        if (cached_dao == null) cached_dao = getDao(LocationStamp.class);
-        return cached_dao;
+        return getLocationStampDao();
+    }
+
+    /**
+     * Get a (cached) DAO-instance to work with {@code Tour}-classes.
+     * @return the (cached) DAO.
+     */
+    public Dao<Tour,Integer> getTourDao() throws SQLException{
+        if (tour_dao == null) tour_dao = getDao(Tour.class);
+        return tour_dao;
     }
 
     @Override
     public void close() {
         super.close();
-        cached_dao = null;
+        location_dao = null;
+        tour_dao = null;
     }
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase, ConnectionSource connectionSource) {
         try {
             TableUtils.createTable(connectionSource, LocationStamp.class);
+            TableUtils.createTable(connectionSource, Tour.class);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
