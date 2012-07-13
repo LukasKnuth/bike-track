@@ -46,6 +46,11 @@ public class Tour implements Parcelable{
         return date;
     }
 
+    @Override
+    public String toString(){
+        return name+" - "+date.toLocaleString();
+    }
+
     /*
         ------------ Parcelable stuff
      */
