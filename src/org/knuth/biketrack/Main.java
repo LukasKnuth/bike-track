@@ -1,50 +1,133 @@
 package org.knuth.biketrack;
 
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningServiceInfo;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
+import android.view.*;
+import android.widget.*;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
+import com.j256.ormlite.dao.Dao;
 import org.knuth.biketrack.persistent.DatabaseHelper;
+import org.knuth.biketrack.persistent.Tour;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 
 public class Main extends OrmLiteBaseActivity<DatabaseHelper> {
 
     /** The Tag to use when logging from this application! */
     public static final String LOG_TAG = "BikeTrack";
 
-    private EditText log;
-    private Button track_start_stop;
+    private ListView tour_list;
+    private ArrayAdapter<Tour> tour_adapter;
+    private ProgressDialog progress;
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        log = (EditText)this.findViewById(R.id.log);
-        track_start_stop = (Button)this.findViewById(R.id.tracking_start_stop);
-        track_start_stop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (isTrackingServiceRunning()){
-                    stopTracking();
-                    track_start_stop.setText("Start Tracking my position!");
-                } else {
-                    startTracking();
-                    track_start_stop.setText("Stop Tracking...");
-                }
+        tour_list = (ListView)this.findViewById(R.id.tour_list);
+        tour_adapter = new ArrayAdapter<Tour>(this, android.R.layout.simple_list_item_1);
+        tour_list.setAdapter(tour_adapter);
+        tour_list.setOnItemClickListener(tour_click);
+        // Load the content a-sync:
+        progress = new ProgressDialog(this);
+        progress.setIndeterminate(true);
+        new LoadTours().execute();
+    }
+
+    /**
+     * Create a new Tour.
+     */
+    public void newTour(MenuItem item){
+        AlertDialog.Builder builder;
+        AlertDialog alertDialog;
+
+        LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
+        final View layout = inflater.inflate(R.layout.new_tour_dialog,
+                (ViewGroup) findViewById(R.id.tour_dialog_root));
+
+        builder = new AlertDialog.Builder(this);
+        builder.setView(layout);
+        builder.setTitle("Create a new Tour").setCancelable(true).
+                setPositiveButton("Done", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        DatePicker date = (DatePicker)layout.findViewById(R.id.tour_date);
+                        EditText name = (EditText)layout.findViewById(R.id.tour_name);
+                        if (name.getText().toString().length() > 0){
+                            try {
+                                Dao<Tour, Integer> dao = Main.this.getHelper().getTourDao();
+                                dao.create(new Tour(
+                                        name.getText().toString(),
+                                        new Date(
+                                                date.getYear(),
+                                                date.getMonth(),
+                                                date.getDayOfMonth()
+                                        )
+                                ));
+                                new LoadTours().execute();
+                                dialogInterface.dismiss();
+                            } catch (SQLException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            Toast.makeText(Main.this, "Insert a name!", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+        alertDialog = builder.create();
+        alertDialog.show();
+    }
+
+    /**
+     * Handle a selected item in the {@code tour_list}.
+     */
+    private AdapterView.OnItemClickListener tour_click = new AdapterView.OnItemClickListener() {
+
+        @Override
+        public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
+            Tour tour = tour_adapter.getItem(pos);
+            Intent intent = new Intent(Main.this, TourActivity.class);
+            intent.putExtra(TrackingService.TOUR_KEY, tour);
+            Main.this.startActivity(intent);
+        }
+    };
+
+    /**
+     * This will asynchronously load all current tours from the database and display
+     *  them in the {@code tour_list}.
+     */
+    private class LoadTours extends AsyncTask<Void, Void, Collection<Tour>>{
+
+        @Override
+        protected void onPreExecute(){
+            progress.show();
+        }
+
+        @Override
+        protected Collection<Tour> doInBackground(Void... voids) {
+            try {
+                Dao<Tour, Integer> tour_dao = Main.this.getHelper().getTourDao();
+                return tour_dao.queryForAll();
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-        });
-        // Check if service is running and set Text accordingly:
-        if (isTrackingServiceRunning())
-            track_start_stop.setText("Stop Tracking...");
-        else
-            track_start_stop.setText("Start Tracking my position!");
+            return new ArrayList<Tour>(0);
+        }
+
+        @Override
+        protected void onPostExecute(Collection<Tour> tours){
+            tour_adapter.clear();
+            tour_adapter.addAll(tours);
+            progress.dismiss();
+        }
     }
 
     @Override
@@ -53,54 +136,4 @@ public class Main extends OrmLiteBaseActivity<DatabaseHelper> {
         return true;
     }
 
-    /**
-     * <p>This method will cause the {@code TrackingService} to start tracking
-     *  and recording your position-data.</p>
-     * <p>If the service has already been started before, nothing will happen.</p>
-     * @see #stopTracking()
-     */
-    private void startTracking(){
-        if (isTrackingServiceRunning()) return;
-        // Start the service:
-        if (this.startService(new Intent(this, TrackingService.class)) != null)
-            log.append("Successfully started tracking!\n");
-        else
-            Log.e(LOG_TAG, "Couldn't start tracking-service!");
-    }
-
-    /**
-     * <p>This method will cause the {@code TrackingService} to stop .</p>
-     * <p>If the service has already been stopped before, nothing will happen.</p>
-     * @see #startTracking()
-     */
-    private void stopTracking(){
-        // Stop the service:
-        if (this.stopService(new Intent(this, TrackingService.class)))
-            log.append("Successfully stopped tracking!\n");
-        else
-            Log.e(LOG_TAG, "Couldn't stopp tracking-service!");
-    }
-
-    /**
-     * Check whether the {@code TrackingService} is already running or not.
-     * @return whether the {@code TrackingService} is already running or not.
-     * @see <a href="http://stackoverflow.com/a/5921190/717341">SO answer</a>
-     */
-    private boolean isTrackingServiceRunning() {
-        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-        for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if ("org.knuth.biketrack.TrackingService".equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public void showRecords(MenuItem v){
-        this.startActivity(new Intent(this, DatabaseActivity.class));
-    }
-
-    public void showMap(MenuItem v){
-        this.startActivity(new Intent(this, TrackMapActivity.class));
-    }
 }

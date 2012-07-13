@@ -4,26 +4,9 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
-<TextView
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:text="Tracking your bike-tour, made easy."
-    />
-<Button
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:text="Start tracking"
-    android:id="@+id/tracking_start_stop"
-    />
-<EditText
-    android:layout_height="fill_parent"
-    android:layout_width="fill_parent"
-    android:id="@+id/log"
-    android:textIsSelectable="false"
-    android:editable="false"
-    android:inputType="textMultiLine|textNoSuggestions"
-    android:focusable="false"
-
-    />
+    <ListView android:id="@+id/tour_list"
+              android:layout_height="fill_parent"
+              android:layout_width="fill_parent"
+              />
 </LinearLayout>
 

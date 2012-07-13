@@ -15,6 +15,7 @@ import com.j256.ormlite.android.apptools.OrmLiteBaseService;
 import com.j256.ormlite.dao.Dao;
 import org.knuth.biketrack.persistent.DatabaseHelper;
 import org.knuth.biketrack.persistent.LocationStamp;
+import org.knuth.biketrack.persistent.Tour;
 
 import java.sql.SQLException;
 import java.util.Date;
@@ -27,12 +28,17 @@ import java.util.Date;
  */
 public class TrackingService extends OrmLiteBaseService<DatabaseHelper> {
 
+    /** The key used to send the current {@code Tour} as an Intent-extra. */
+    public static final String TOUR_KEY = "tour";
+
     /** The listener to process the location-changes */
     private LocationListener locationListener;
     /** The listener to check for the current GPS-status */
     private GpsStatus.Listener gpsListener;
     /** The time of the last location-change */
     private long mLastLocationMillis;
+    /** The current {@code Tour} we're taking. */
+    private Tour current_tour;
 
     @Override
     public void onCreate() {
@@ -42,12 +48,13 @@ public class TrackingService extends OrmLiteBaseService<DatabaseHelper> {
             @Override
             public void onLocationChanged(Location location) {
                 try {
-                    Dao<LocationStamp, Void> location_dao = getHelper().getDao();
+                    Dao<LocationStamp, Void> location_dao = getHelper().getLocationStampDao();
                     location_dao.create(new LocationStamp(
                             (int)(location.getLatitude() * 1E6), // Use the E6-format.
                             (int)(location.getLongitude() * 1E6),
                             new Date(),
-                            (int)(location.getSpeed() * 3.6) // Calculate Km/h
+                            (int)(location.getSpeed() * 3.6), // Calculate Km/h
+                            current_tour
                     ));
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -95,8 +102,15 @@ public class TrackingService extends OrmLiteBaseService<DatabaseHelper> {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // Check if already started:
+        if (current_tour != null) return Service.START_STICKY;
+        // Otherwise, start and do initial work.
         super.onStartCommand(intent, flags, startId);
-        // TODO WHat if started multiple times?
+        // Get the current tour:
+        current_tour = intent.getExtras().getParcelable(TOUR_KEY);
+        if (current_tour == null){
+            throw new IllegalStateException("Can't work without a Tour!");
+        }
         // Bind the listeners:
         LocationManager loc = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
         loc.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 10, locationListener);

@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:onClick="showRecords"
-          android:title="Show Records"
+    <item android:onClick="newTour"
+          android:title="Create Tour"
           android:showAsAction="ifRoom|withText"
-          android:icon="@android:drawable/ic_menu_sort_by_size"
+          android:icon="@android:drawable/ic_menu_add"
           />
-    <item android:onClick="showMap"
-          android:title="Show Track-Map"
-          android:showAsAction="ifRoom|withText"
-          android:icon="@android:drawable/ic_menu_mapmode"
-          />
+
 </menu>

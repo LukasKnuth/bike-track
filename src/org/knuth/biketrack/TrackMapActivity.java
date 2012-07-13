@@ -4,11 +4,13 @@ import android.app.ProgressDialog;
 import android.graphics.*;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import com.google.android.maps.*;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.Dao;
 import org.knuth.biketrack.persistent.DatabaseHelper;
 import org.knuth.biketrack.persistent.LocationStamp;
+import org.knuth.biketrack.persistent.Tour;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -28,6 +30,8 @@ public class TrackMapActivity extends MapActivity {
 
     private ProgressDialog progress;
 
+    private Tour current_tour;
+
     @Override
     public void onCreate(Bundle saved){
         super.onCreate(saved);
@@ -43,10 +47,19 @@ public class TrackMapActivity extends MapActivity {
         track_paint.setStrokeCap(Paint.Cap.ROUND);
         track_paint.setStrokeWidth(3);
 
+        // Get the current tour:
+        Bundle extras = this.getIntent().getExtras();
+        if (extras != null && extras.containsKey(TrackingService.TOUR_KEY)){
+            current_tour = extras.getParcelable(TrackingService.TOUR_KEY);
+        } else {
+            Log.e(Main.LOG_TAG, "No tour was supplied to TrackMapActivity!");
+        }
+        this.setTitle("Map for '"+current_tour.getName()+"'");
+
         // Load data from Database and display the Track:
         progress = new ProgressDialog(this);
         progress.setIndeterminate(true);
-        new LoadTrack().execute();
+        new LoadTrack().execute(current_tour);
     }
 
     @Override
@@ -57,7 +70,7 @@ public class TrackMapActivity extends MapActivity {
     /**
      * Loads a specific track from the Database and displays it over the Map.
      */
-    private class LoadTrack extends AsyncTask<Void, TrackOverlay, GeoPoint>{
+    private class LoadTrack extends AsyncTask<Tour, TrackOverlay, GeoPoint>{
 
         @Override
         protected void onPreExecute(){
@@ -65,10 +78,11 @@ public class TrackMapActivity extends MapActivity {
         }
 
         @Override
-        protected GeoPoint doInBackground(Void... voids) {
+        protected GeoPoint doInBackground(Tour... tours) {
             try {
-                Dao<LocationStamp, Void> location_dao = TrackMapActivity.this.getHelper().getDao();
-                List<LocationStamp> stamps = location_dao.queryForAll();
+                Dao<LocationStamp, Void> location_dao = TrackMapActivity.this.getHelper().getLocationStampDao();
+                List<LocationStamp> stamps = location_dao.queryForEq("tour_id", tours[0].getId());
+                if (stamps.size() == 0) return null;
                 // Create overlay:
                 TrackOverlay overlay = new TrackOverlay();
                 overlay.addAll(stamps);

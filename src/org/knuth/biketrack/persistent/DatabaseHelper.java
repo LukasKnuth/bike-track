@@ -39,11 +39,6 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         return location_dao;
     }
 
-    // TODO Remove this. Just to make commit comile!
-    public Dao<LocationStamp, Void> getDao() throws SQLException {
-        return getLocationStampDao();
-    }
-
     /**
      * Get a (cached) DAO-instance to work with {@code Tour}-classes.
      * @return the (cached) DAO.
