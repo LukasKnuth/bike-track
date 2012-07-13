@@ -1,3 +1,6 @@
 # IntelliJ stuff:
 .idea/
 BikeTrack.iml
+
+# Binary output:
+out/
