@@ -42,6 +42,10 @@ public class Tour implements Parcelable{
         return name;
     }
 
+    public void setName(String name){
+        this.name = name;
+    }
+
     public Date getDate() {
         return date;
     }

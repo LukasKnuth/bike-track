@@ -11,9 +11,13 @@ public final class R {
     public static final class attr {
     }
     public static final class id {
-        public static final int charts=0x7f060005;
-        public static final int mapview=0x7f060006;
-        public static final int start_stop_tracking=0x7f060004;
+        public static final int charts=0x7f060007;
+        public static final int main_context_delete=0x7f060009;
+        public static final int main_context_rename=0x7f06000a;
+        public static final int mapview=0x7f060008;
+        public static final int new_tour_name=0x7f060005;
+        public static final int rename_dialog_root=0x7f060004;
+        public static final int start_stop_tracking=0x7f060006;
         public static final int tour_date=0x7f060003;
         public static final int tour_dialog_root=0x7f060001;
         public static final int tour_list=0x7f060000;
@@ -22,12 +26,14 @@ public final class R {
     public static final class layout {
         public static final int main=0x7f020000;
         public static final int new_tour_dialog=0x7f020001;
-        public static final int tour=0x7f020002;
-        public static final int trackmap=0x7f020003;
+        public static final int rename_tour_dialog=0x7f020002;
+        public static final int tour=0x7f020003;
+        public static final int trackmap=0x7f020004;
     }
     public static final class menu {
-        public static final int main_menu=0x7f050000;
-        public static final int tour_menu=0x7f050001;
+        public static final int main_context_menu=0x7f050000;
+        public static final int main_menu=0x7f050001;
+        public static final int tour_menu=0x7f050002;
     }
     public static final class raw {
         public static final int ormlite_config=0x7f030000;
