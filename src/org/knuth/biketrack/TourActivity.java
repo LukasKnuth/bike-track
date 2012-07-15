@@ -2,17 +2,31 @@ package org.knuth.biketrack;
 
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
+import android.app.ProgressDialog;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
+import com.j256.ormlite.dao.Dao;
+import org.achartengine.ChartFactory;
+import org.achartengine.model.TimeSeries;
+import org.achartengine.model.XYMultipleSeriesDataset;
+import org.achartengine.renderer.BasicStroke;
+import org.achartengine.renderer.XYMultipleSeriesRenderer;
+import org.achartengine.renderer.XYSeriesRenderer;
 import org.knuth.biketrack.persistent.DatabaseHelper;
+import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.persistent.Tour;
+
+import java.sql.SQLException;
+import java.util.List;
 
 /**
  * <p>An {@code Activity}, showing data about one single tour.</p>
@@ -27,11 +41,14 @@ public class TourActivity extends OrmLiteBaseActivity<DatabaseHelper>{
     private Tour current_tour;
 
     private Button start_stop;
+    private LinearLayout charts;
+    private ProgressDialog progress;
 
     @Override
     public void onCreate(Bundle saved){
         super.onCreate(saved);
         this.setContentView(R.layout.tour);
+        charts = (LinearLayout)this.findViewById(R.id.charts);
         // Get the Tour:
         Bundle extras = this.getIntent().getExtras();
         if (extras != null && extras.containsKey(TrackingService.TOUR_KEY)){
@@ -58,6 +75,70 @@ public class TourActivity extends OrmLiteBaseActivity<DatabaseHelper>{
             }
         });
         Log.v(Main.LOG_TAG, "Current tour has id of "+current_tour.getId());
+        // Query for the data and create the statistics:
+        progress = new ProgressDialog(this);
+        progress.setTitle("Doing the Math...");
+        progress.setIndeterminate(true);
+        new SpeedStatistics().execute();
+    }
+
+    /**
+     * Do the math for the speed-statistics
+     */
+    private class SpeedStatistics extends AsyncTask<Void, Integer, XYMultipleSeriesDataset>{
+
+        @Override
+        protected void onPreExecute(){
+            progress.show();
+        }
+
+        @Override
+        protected XYMultipleSeriesDataset doInBackground(Void... data) {
+            List<LocationStamp> locs;
+            try {
+                Dao<LocationStamp, Void> dao = TourActivity.this.getHelper().getLocationStampDao();
+                locs = dao.queryForEq("tour_id", current_tour.getId());
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return null;
+            }
+            int counter = 0;
+            XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
+            TimeSeries speed_series = new TimeSeries("Your Speed (in Km/h)");
+            for (LocationStamp stamp : locs){
+                speed_series.add(
+                        stamp.getTimestamp(),
+                        stamp.getSpeed()
+                );
+                publishProgress(++counter, locs.size());
+            }
+            dataset.addSeries(speed_series);
+            return dataset;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... stats){
+            progress.setMessage("Progressing "+stats[0]+" of "+stats[1]+" items.");
+        }
+
+        @Override
+        protected void onPostExecute(XYMultipleSeriesDataset dataset){
+            if (dataset != null){
+                XYSeriesRenderer seriesRenderer = new XYSeriesRenderer();
+                seriesRenderer.setFillPoints(false);
+                seriesRenderer.setLineWidth(2);
+                seriesRenderer.setStroke(BasicStroke.SOLID);
+
+                XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+                renderer.setYTitle("Speed (in Km/h)");
+                renderer.setXTitle("Time");
+                renderer.setXLabels(8);
+                renderer.addSeriesRenderer(seriesRenderer);
+                charts.addView(ChartFactory.getTimeChartView(
+                        TourActivity.this, dataset, renderer, null));
+            }
+            progress.dismiss();
+        }
     }
 
     /**

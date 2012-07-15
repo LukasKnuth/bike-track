@@ -11,7 +11,8 @@ public final class R {
     public static final class attr {
     }
     public static final class id {
-        public static final int mapview=0x7f060005;
+        public static final int charts=0x7f060005;
+        public static final int mapview=0x7f060006;
         public static final int start_stop_tracking=0x7f060004;
         public static final int tour_date=0x7f060003;
         public static final int tour_dialog_root=0x7f060001;
