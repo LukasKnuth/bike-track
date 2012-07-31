@@ -2,7 +2,7 @@
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:onClick="newTour"
-          android:title="Create Tour"
+          android:title="@string/main.menu.newTour"
           android:showAsAction="ifRoom|withText"
           android:icon="@android:drawable/ic_menu_add"
           />

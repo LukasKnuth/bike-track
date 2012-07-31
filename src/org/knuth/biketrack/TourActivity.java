@@ -7,13 +7,12 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
-import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
 import com.j256.ormlite.dao.Dao;
 import org.achartengine.ChartFactory;
 import org.achartengine.model.TimeSeries;
@@ -21,7 +20,6 @@ import org.achartengine.model.XYMultipleSeriesDataset;
 import org.achartengine.renderer.BasicStroke;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
-import org.knuth.biketrack.persistent.DatabaseHelper;
 import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.persistent.Tour;
 
@@ -35,7 +33,7 @@ import java.util.List;
  * @author Lukas Knuth
  * @version 1.0
  */
-public class TourActivity extends OrmLiteBaseActivity<DatabaseHelper>{
+public class TourActivity extends BaseActivity{
 
     /** The tour which is currently shown on this Activity */
     private Tour current_tour;
@@ -197,7 +195,31 @@ public class TourActivity extends OrmLiteBaseActivity<DatabaseHelper>{
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        this.getMenuInflater().inflate(R.menu.tour_menu, menu);
+        /*
+            NOT inflating menu currently.
+            See https://github.com/JakeWharton/ActionBarSherlock/issues/562
+        */
+        //this.getSupportMenuInflater().inflate(R.menu.tour_menu, menu);
+        menu.add(R.string.tourActivity_menu_showRecords)
+            .setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_IF_ROOM|MenuItem.SHOW_AS_ACTION_WITH_TEXT)
+            .setIcon(android.R.drawable.ic_menu_sort_by_size)
+            .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    showRecords(item);
+                    return true;
+                }
+            });
+        menu.add(R.string.tourActivity_menu_showMap)
+            .setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_IF_ROOM|MenuItem.SHOW_AS_ACTION_WITH_TEXT)
+            .setIcon(android.R.drawable.ic_menu_mapmode)
+            .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    showMap(item);
+                    return true;
+                }
+            });
         return true;
     }
 

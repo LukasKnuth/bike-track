@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">BikeTrack</string>
+
+    <!-- ActionBar menus - convention: [Activity].menu.[Name] -->
+    <string name="main.menu.newTour">Create Tour</string>
+    <string name="tourActivity.menu.showRecords">Show records</string>
+    <string name="tourActivity.menu.showMap">Show Track-Map</string>
 </resources>

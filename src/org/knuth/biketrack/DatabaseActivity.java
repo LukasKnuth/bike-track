@@ -8,9 +8,7 @@ import android.util.Log;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
-import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.j256.ormlite.dao.Dao;
-import org.knuth.biketrack.persistent.DatabaseHelper;
 import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.persistent.Tour;
 
@@ -23,7 +21,7 @@ import java.util.List;
  * @author Lukas Knuth
  * @version 1.0
  */
-public class DatabaseActivity extends OrmLiteBaseActivity<DatabaseHelper> {
+public class DatabaseActivity extends BaseActivity {
 
     private ProgressDialog progress;
     private TableLayout table;
@@ -53,6 +51,8 @@ public class DatabaseActivity extends OrmLiteBaseActivity<DatabaseHelper> {
         setContentView(table);
         progress = new ProgressDialog(this);
         progress.setIndeterminate(true);
+        progress.setTitle("Reading from the Database.");
+        progress.setMessage("Cancel with [back]");
         new QueryAll().execute(current_tour);
     }
 
@@ -82,6 +82,7 @@ public class DatabaseActivity extends OrmLiteBaseActivity<DatabaseHelper> {
                     row.addView( makeTextView(stamp.getLongitudeE6()+"") );
                     row.addView( makeTextView(stamp.getSpeed()+"") );
                     publishProgress(row);
+                    // TODO Make cancelable
                 }
             } catch (SQLException e) {
                 e.printStackTrace();

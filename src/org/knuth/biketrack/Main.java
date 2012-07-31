@@ -7,11 +7,13 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.*;
-import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
 import com.j256.ormlite.dao.Dao;
-import org.knuth.biketrack.persistent.DatabaseHelper;
 import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.persistent.Tour;
 
@@ -21,7 +23,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-public class Main extends OrmLiteBaseActivity<DatabaseHelper> {
+public class Main extends BaseActivity {
 
     /** The Tag to use when logging from this application! */
     public static final String LOG_TAG = "BikeTrack";
@@ -36,14 +38,14 @@ public class Main extends OrmLiteBaseActivity<DatabaseHelper> {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         tour_list = (ListView)this.findViewById(R.id.tour_list);
-        tour_adapter = new ArrayAdapter<Tour>(this, android.R.layout.simple_list_item_multiple_choice);
+        tour_adapter = new ArrayAdapter<Tour>(this, android.R.layout.simple_list_item_1);
         tour_list.setAdapter(tour_adapter);
         tour_list.setOnItemClickListener(tour_click);
-        tour_list.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
-        tour_list.setMultiChoiceModeListener(contextListener);
+        // TODO Implement context functionality for both Android 3.X and lower.
         // Load the content a-sync:
         progress = new ProgressDialog(this);
         progress.setIndeterminate(true);
+        progress.setMessage("Reading Tours from Database...");
         new LoadTours().execute();
     }
 
@@ -92,70 +94,6 @@ public class Main extends OrmLiteBaseActivity<DatabaseHelper> {
     }
 
     /**
-     * Implement contextual functionality for the list of tours.
-     */
-    private AbsListView.MultiChoiceModeListener contextListener =
-            new AbsListView.MultiChoiceModeListener() {
-        @Override
-        public void onItemCheckedStateChanged(
-                ActionMode actionMode, int position, long id, boolean checked) {
-            // Do something when items are de-/ selected.
-            actionMode.setTitle(tour_list.getCheckedItemCount()+" selected");
-            // Don't allow renaming multiple entries:
-            if (tour_list.getCheckedItemCount() > 1){
-                actionMode.getMenu().findItem(R.id.main_context_rename).setVisible(false);
-            } else {
-                actionMode.getMenu().findItem(R.id.main_context_rename).setVisible(true);
-            }
-        }
-
-        @Override
-        public boolean onCreateActionMode(ActionMode actionMode, Menu menu) {
-            // Infalte the Menu for the contextual choice:
-            actionMode.getMenuInflater().inflate(R.menu.main_context_menu, menu);
-            return true;
-        }
-
-        @Override
-        public boolean onPrepareActionMode(ActionMode actionMode, Menu menu) {
-            // Used to refresh a menu. Not implemented as of now.
-            return false;
-        }
-
-        @Override
-        public boolean onActionItemClicked(ActionMode actionMode, MenuItem item) {
-            // Get all selected items:
-            List<Tour> selected_tours = new ArrayList<Tour>();
-            for (int i = 0; i < tour_adapter.getCount(); i++){
-                if (tour_list.getCheckedItemPositions().get(i)){
-                    selected_tours.add(tour_adapter.getItem(i));
-                }
-            }
-            // Action was clicked:
-            switch (item.getItemId()){
-                case R.id.main_context_delete:
-                    // Delete the selected items.
-                    showDeleteDialog(selected_tours);
-                    actionMode.finish();
-                    return true;
-                case R.id.main_context_rename:
-                    // Rename one selected item.
-                    showRenameDialog(selected_tours.get(0));
-                    actionMode.finish();
-                    return true;
-                default:
-                    // Unsupported action:
-                    return false;
-            }
-        }
-
-        @Override
-        public void onDestroyActionMode(ActionMode actionMode) {
-            // Left contextual menu.
-        }
-    };
-
-    /**
      * Handle a selected item in the {@code tour_list}.
      */
     private AdapterView.OnItemClickListener tour_click = new AdapterView.OnItemClickListener() {
@@ -194,14 +132,29 @@ public class Main extends OrmLiteBaseActivity<DatabaseHelper> {
         @Override
         protected void onPostExecute(Collection<Tour> tours){
             tour_adapter.clear();
-            tour_adapter.addAll(tours);
+            for (Tour t : tours)
+                tour_adapter.add(t);
             progress.dismiss();
         }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        this.getMenuInflater().inflate(R.menu.main_menu, menu);
+        /*
+            NOT inflating menu currently.
+            See https://github.com/JakeWharton/ActionBarSherlock/issues/562
+        */
+        //this.getSupportMenuInflater().inflate(R.menu.main_menu, menu);
+        menu.add(R.string.main_menu_newTour).
+             setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_IF_ROOM|MenuItem.SHOW_AS_ACTION_WITH_TEXT).
+             setIcon(android.R.drawable.ic_menu_add).
+             setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                newTour(item);
+                return true;
+            }
+        });
         return true;
     }
 
