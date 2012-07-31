@@ -1,13 +1,12 @@
 package org.knuth.biketrack;
 
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.TableLayout;
-import android.widget.TableRow;
-import android.widget.TextView;
+import android.widget.*;
 import com.j256.ormlite.dao.Dao;
 import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.persistent.Tour;
@@ -25,6 +24,7 @@ public class DatabaseActivity extends BaseActivity {
 
     private ProgressDialog progress;
     private TableLayout table;
+    private AsyncTask loading_task;
 
     private Tour current_tour;
 
@@ -38,6 +38,10 @@ public class DatabaseActivity extends BaseActivity {
         headlines.addView( makeHeadline("Longitude"));
         headlines.addView( makeHeadline("Speed (km/h)"));
         table.addView(headlines);
+        table.setStretchAllColumns(true);
+        ScrollView table_scroll = new ScrollView(this);
+        table_scroll.addView(table);
+        setContentView(table_scroll);
         // Get the current tour:
         Bundle extras = this.getIntent().getExtras();
         if (extras != null && extras.containsKey(TrackingService.TOUR_KEY)){
@@ -47,13 +51,19 @@ public class DatabaseActivity extends BaseActivity {
         }
         this.setTitle("Location Stamps for '"+current_tour.getName()+"'");
         // Show the data:
-        table.setStretchAllColumns(true);
-        setContentView(table);
         progress = new ProgressDialog(this);
         progress.setIndeterminate(true);
         progress.setTitle("Reading from the Database.");
         progress.setMessage("Cancel with [back]");
-        new QueryAll().execute(current_tour);
+        progress.setCanceledOnTouchOutside(false);
+        progress.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialogInterface) {
+                if (loading_task != null && !loading_task.isCancelled())
+                    loading_task.cancel(false);
+            }
+        });
+        loading_task = new QueryAll().execute(current_tour);
     }
 
     private TextView makeHeadline(String content){
@@ -82,7 +92,8 @@ public class DatabaseActivity extends BaseActivity {
                     row.addView( makeTextView(stamp.getLongitudeE6()+"") );
                     row.addView( makeTextView(stamp.getSpeed()+"") );
                     publishProgress(row);
-                    // TODO Make cancelable
+                    // Check if cancelled.
+                    if (isCancelled()) break;
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -103,6 +114,13 @@ public class DatabaseActivity extends BaseActivity {
 
         @Override
         protected void onPostExecute(Void voids){
+            progress.dismiss();
+        }
+
+        @Override
+        protected void onCancelled(){
+            Toast.makeText(DatabaseActivity.this,
+                    "Cancelled list creation.", Toast.LENGTH_SHORT).show();
             progress.dismiss();
         }
     }
