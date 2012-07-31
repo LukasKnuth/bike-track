@@ -1073,6 +1073,8 @@ containing a value of this type.
          */
         public static final int abs__shareactionprovider_share_with_application=0x7f0a0009;
         public static final int app_name=0x7f0a000f;
+        public static final int main_contextmenu_delete=0x7f0a0013;
+        public static final int main_contextmenu_rename=0x7f0a0014;
         /**  ActionBar menus - convention: [Activity].menu.[Name] 
          */
         public static final int main_menu_newTour=0x7f0a0010;

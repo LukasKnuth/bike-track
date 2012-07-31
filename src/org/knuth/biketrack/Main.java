@@ -1,5 +1,6 @@
 package org.knuth.biketrack;
 
+import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -7,6 +8,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,12 +43,17 @@ public class Main extends BaseActivity {
         tour_adapter = new ArrayAdapter<Tour>(this, android.R.layout.simple_list_item_1);
         tour_list.setAdapter(tour_adapter);
         tour_list.setOnItemClickListener(tour_click);
-        // TODO Implement context functionality for both Android 3.X and lower.
         // Load the content a-sync:
         progress = new ProgressDialog(this);
         progress.setIndeterminate(true);
         progress.setMessage("Reading Tours from Database...");
         new LoadTours().execute();
+        // We'll load the contextual menus, depending on the current APIs available:
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
+            makeActionbarContextMenu();
+        } else {
+            Main.this.registerForContextMenu(tour_list);
+        }
     }
 
     /**
@@ -91,6 +98,108 @@ public class Main extends BaseActivity {
                 });
         alertDialog = builder.create();
         alertDialog.show();
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo){
+        if (v == tour_list){
+            // Add the context menu for the tour-list:
+            menu.add(R.string.main_contextmenu_rename)
+                .setIcon(android.R.drawable.ic_menu_delete)
+                .setOnMenuItemClickListener(new android.view.MenuItem.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(android.view.MenuItem menuItem) {
+                        final AdapterView.AdapterContextMenuInfo info =
+                                (AdapterView.AdapterContextMenuInfo) menuItem.getMenuInfo();
+                        showRenameDialog(tour_adapter.getItem(info.position));
+                        return true;
+                    }
+                });
+            menu.add(R.string.main_contextmenu_delete)
+                .setIcon(android.R.drawable.ic_menu_edit)
+                .setOnMenuItemClickListener(new android.view.MenuItem.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(android.view.MenuItem menuItem) {
+                        final AdapterView.AdapterContextMenuInfo info =
+                                (AdapterView.AdapterContextMenuInfo) menuItem.getMenuInfo();
+                        List<Tour> tours = new ArrayList<Tour>(1);
+                        tours.add(tour_adapter.getItem(info.position));
+                        showDeleteDialog(tours);
+                        return true;
+                    }
+                });
+        }
+    }
+
+    /**
+     * <p>This method should only be called on pre Honeycomb decices.</p>
+     * <p>It will use the original ActionBar API to create a context-menu with it.</p>
+     */
+    @TargetApi(11)
+    private void makeActionbarContextMenu(){
+        tour_list.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+        tour_list.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
+            @Override
+            public void onItemCheckedStateChanged(
+                    android.view.ActionMode actionMode, int position, long id, boolean checked) {
+                // Do something when items are de-/ selected.
+                actionMode.setTitle(tour_list.getCheckedItemCount()+" selected");
+                // Don't allow renaming multiple entries:
+                if (tour_list.getCheckedItemCount() > 1){
+                    actionMode.getMenu().findItem(R.id.main_context_rename).setVisible(false);
+                } else {
+                    actionMode.getMenu().findItem(R.id.main_context_rename).setVisible(true);
+                }
+            }
+
+            @Override
+            public boolean onCreateActionMode(
+                    android.view.ActionMode actionMode, android.view.Menu menu) {
+                // Infalte the Menu for the contextual choice:
+                actionMode.getMenuInflater().inflate(R.menu.main_context_menu, menu);
+                return true;
+            }
+
+            @Override
+            public boolean onPrepareActionMode(
+                    android.view.ActionMode actionMode, android.view.Menu menu) {
+                // Used to refresh a menu. Not implemented as of now.
+                return false;
+            }
+
+            @Override
+            public boolean onActionItemClicked(
+                    android.view.ActionMode actionMode, android.view.MenuItem item) {
+                // Get all selected items:
+                List<Tour> selected_tours = new ArrayList<Tour>();
+                for (int i = 0; i < tour_adapter.getCount(); i++){
+                    if (tour_list.getCheckedItemPositions().get(i)){
+                        selected_tours.add(tour_adapter.getItem(i));
+                    }
+                }
+                // Action was clicked:
+                switch (item.getItemId()){
+                    case R.id.main_context_delete:
+                        // Delete the selected items.
+                        showDeleteDialog(selected_tours);
+                        actionMode.finish();
+                        return true;
+                    case R.id.main_context_rename:
+                        // Rename one selected item.
+                        showRenameDialog(selected_tours.get(0));
+                        actionMode.finish();
+                        return true;
+                    default:
+                        // Unsupported action:
+                        return false;
+                }
+            }
+
+            @Override
+            public void onDestroyActionMode(android.view.ActionMode actionMode) {
+                // Left contextual menu.
+            }
+        });
     }
 
     /**
