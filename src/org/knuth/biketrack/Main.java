@@ -16,6 +16,7 @@ import android.widget.*;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.QueryBuilder;
 import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.persistent.Tour;
 
@@ -47,6 +48,7 @@ public class Main extends BaseActivity {
         progress = new ProgressDialog(this);
         progress.setIndeterminate(true);
         progress.setMessage("Reading Tours from Database...");
+        progress.setCancelable(false);
         new LoadTours().execute();
         // We'll load the contextual menus, depending on the current APIs available:
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
@@ -230,7 +232,9 @@ public class Main extends BaseActivity {
         protected Collection<Tour> doInBackground(Void... voids) {
             try {
                 Dao<Tour, Integer> tour_dao = Main.this.getHelper().getTourDao();
-                return tour_dao.queryForAll();
+                QueryBuilder<Tour, Integer> builder = tour_dao.queryBuilder();
+                builder.orderBy("date", false);
+                return builder.query();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -273,6 +277,7 @@ public class Main extends BaseActivity {
     private void showDeleteDialog(final List<Tour> tours){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         AlertDialog dialog = builder.setCancelable(true).setTitle("Delete Tours").
+                // TODO When single select, show tour name instead!
                 setMessage("Are you sure that you want to delete all " +
                         tours.size() + " selected tours?").
                 setPositiveButton("Yes", new DialogInterface.OnClickListener() {

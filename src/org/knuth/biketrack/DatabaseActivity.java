@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.*;
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.QueryBuilder;
 import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.persistent.Tour;
 
@@ -84,7 +85,10 @@ public class DatabaseActivity extends BaseActivity {
         protected Void doInBackground(Tour... tours) {
             try {
                 Dao<LocationStamp, Void> location_dao = DatabaseActivity.this.getHelper().getLocationStampDao();
-                List<LocationStamp> stamps = location_dao.queryForEq("tour_id", tours[0].getId());
+                QueryBuilder<LocationStamp, Void> builder = location_dao.queryBuilder();
+                builder.where().eq("tour_id", current_tour.getId());
+                builder.orderBy("timestamp", true);
+                List<LocationStamp> stamps = builder.query();
                 for (LocationStamp stamp : stamps){
                     TableRow row = new TableRow(DatabaseActivity.this);
                     row.addView( makeTextView(stamp.getTimestamp().toLocaleString()) );
