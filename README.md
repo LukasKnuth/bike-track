@@ -45,3 +45,4 @@ If you encounter any **problems or bugs**, please also *open a ticket* on the [I
 * Add charts for all collected data (AchartEngine, JavaDoc for ChartFactory).
 * Add measuring altitude (see http://stackoverflow.com/questions/6141390)
 * Make the TrackerService bind-able and use the messages to get the GPS-state.
+* Change Font to Roboto (http://developer.android.com/design/style/typography.html)

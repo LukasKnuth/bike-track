@@ -53,6 +53,7 @@ public class Main extends BaseActivity {
         // We'll load the contextual menus, depending on the current APIs available:
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
             makeActionbarContextMenu();
+            // TODO Make multiple selections visible
         } else {
             Main.this.registerForContextMenu(tour_list);
         }
@@ -276,10 +277,7 @@ public class Main extends BaseActivity {
      */
     private void showDeleteDialog(final List<Tour> tours){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        AlertDialog dialog = builder.setCancelable(true).setTitle("Delete Tours").
-                // TODO When single select, show tour name instead!
-                setMessage("Are you sure that you want to delete all " +
-                        tours.size() + " selected tours?").
+        builder.setCancelable(true).setTitle("Delete Tours").
                 setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
@@ -307,8 +305,15 @@ public class Main extends BaseActivity {
             public void onClick(DialogInterface dialogInterface, int i) {
                 dialogInterface.dismiss();
             }
-        }).create();
-        dialog.show();
+        });
+        if (tours.size() > 1){
+            builder.setMessage("Are you sure that you want to delete all " +
+                    tours.size() + " selected tours?");
+        } else {
+            builder.setMessage("Are you sure that you want to delete '" +
+                     tours.get(0).getName()+"' ?");
+        }
+        builder.create().show();
     }
 
     /**
