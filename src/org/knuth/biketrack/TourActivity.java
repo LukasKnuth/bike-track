@@ -2,11 +2,16 @@ package org.knuth.biketrack;
 
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -206,7 +211,7 @@ public class TourActivity extends BaseActivity{
      * @see #stopTracking()
      */
     private boolean startTracking(Tour tour){
-        // TODO Check if GPS is enabled!!!
+        if (!checkGpsEnabled()) return false;
         if (isTrackingServiceRunning()) return true;
         // Start the service:
         Intent track_service = new Intent(this, TrackingService.class);
@@ -249,6 +254,33 @@ public class TourActivity extends BaseActivity{
             }
         }
         return false;
+    }
+
+    /**
+     * This will check if the GPS is currently enabled and if not, show a dialog
+     *  which brings you to the corresponding settings activity.
+     * @return {@code true} if GPS was activated, {@code false} otherwise.
+     */
+    private boolean checkGpsEnabled(){
+        final LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            // GPS is not enabled:
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("GPS is currently disabled. You'll need to enable it.")
+                    .setCancelable(false)
+                    .setPositiveButton("Settings", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                        }
+                    })
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.dismiss();
+                        }
+                    });
+            builder.create().show();
+            return false;
+        } else return true;
     }
 
     @Override
