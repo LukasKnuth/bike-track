@@ -21,8 +21,8 @@ import org.knuth.biketrack.persistent.Tour;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 public class Main extends BaseActivity {
@@ -78,14 +78,13 @@ public class Main extends BaseActivity {
                         if (name.getText().toString().length() > 0){
                             try {
                                 Dao<Tour, Integer> dao = Main.this.getHelper().getTourDao();
-                                dao.create(new Tour(
-                                        name.getText().toString(),
-                                        new Date(
-                                                date.getYear(),
-                                                date.getMonth(),
-                                                date.getDayOfMonth()
-                                        )
-                                ));
+                                // Make the date:
+                                Calendar calendar = Calendar.getInstance();
+                                calendar.set(date.getYear(), date.getMonth(), date.getDayOfMonth());
+                                dao.create(
+                                        new Tour(name.getText().toString(), calendar.getTime())
+                                );
+                                // Reload the tours:
                                 new LoadTours().execute();
                                 dialogInterface.dismiss();
                             } catch (SQLException e) {
