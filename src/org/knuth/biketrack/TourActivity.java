@@ -4,26 +4,29 @@ import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.LinearLayout;
+import android.widget.ExpandableListView;
 import android.widget.Toast;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.j256.ormlite.dao.Dao;
-import org.achartengine.ChartFactory;
-import org.achartengine.model.TimeSeries;
-import org.achartengine.model.XYMultipleSeriesDataset;
-import org.achartengine.renderer.BasicStroke;
-import org.achartengine.renderer.XYMultipleSeriesRenderer;
-import org.achartengine.renderer.XYSeriesRenderer;
+import com.j256.ormlite.stmt.QueryBuilder;
+import org.knuth.biketrack.adapter.statistic.ExpandableStatisticAdapter;
+import org.knuth.biketrack.adapter.statistic.Statistic;
+import org.knuth.biketrack.adapter.statistic.StatisticGroup;
 import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.persistent.Tour;
 
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -38,15 +41,15 @@ public class TourActivity extends BaseActivity{
     /** The tour which is currently shown on this Activity */
     private Tour current_tour;
 
+    private ExpandableListView statistics;
     private Button start_stop;
-    private LinearLayout charts;
     private ProgressDialog progress;
 
     @Override
     public void onCreate(Bundle saved){
         super.onCreate(saved);
         this.setContentView(R.layout.tour);
-        charts = (LinearLayout)this.findViewById(R.id.charts);
+        statistics = (ExpandableListView)findViewById(R.id.statistics);
         // Get the Tour:
         Bundle extras = this.getIntent().getExtras();
         if (extras != null && extras.containsKey(TrackingService.TOUR_KEY)){
@@ -75,15 +78,12 @@ public class TourActivity extends BaseActivity{
         Log.v(Main.LOG_TAG, "Current tour has id of "+current_tour.getId());
         // Query for the data and create the statistics:
         progress = new ProgressDialog(this);
-        progress.setTitle("Doing the Math...");
+        progress.setMessage("Doing the Math...");
         progress.setIndeterminate(true);
-        new SpeedStatistics().execute();
+        new StatisticLoader().execute();
     }
 
-    /**
-     * Do the math for the speed-statistics
-     */
-    private class SpeedStatistics extends AsyncTask<Void, Integer, XYMultipleSeriesDataset>{
+    private class StatisticLoader extends AsyncTask<Void, Void, ExpandableStatisticAdapter>{
 
         @Override
         protected void onPreExecute(){
@@ -91,53 +91,110 @@ public class TourActivity extends BaseActivity{
         }
 
         @Override
-        protected XYMultipleSeriesDataset doInBackground(Void... data) {
-            List<LocationStamp> locs;
+        protected ExpandableStatisticAdapter doInBackground(Void... voids) {
+            List<LocationStamp> stamps = getStamps();
+            if (stamps.isEmpty()) return null;
+            // Fill the Adapter:
+            ArrayList<StatisticGroup> groups = new ArrayList<StatisticGroup>(1);
+            groups.add( getSpeedGroup(stamps) );
+            groups.add( getTrackGroup(stamps) );
+            groups.add( getTimeGroup(stamps) );
+
+            return new ExpandableStatisticAdapter(TourActivity.this, groups);
+        }
+
+        /**
+         * Calculate the time spend riding.
+         */
+        private StatisticGroup getTimeGroup(List<LocationStamp> stamps){
+            Date start = stamps.get(0).getTimestamp();
+            Date end = stamps.get( stamps.size()-1 ).getTimestamp();
+            // Since the Java Date-API sucks...
+            long secs = (end.getTime() - start.getTime()) / 1000;
+            int mins = (int)(secs / 60);
+            SimpleDateFormat format = new SimpleDateFormat("HH:mm");
+            // Pack everything up:
+            StatisticGroup time_group = new StatisticGroup("Time");
+            time_group.add(new Statistic<String>(format.format(start), "", "Start time"));
+            time_group.add(new Statistic<String>(format.format(end), "", "End time"));
+            time_group.add(new Statistic<Integer>(mins, "min", "Overall time"));
+            return time_group;
+        }
+
+        /**
+         * Calculate the length of the track
+         */
+        private StatisticGroup getTrackGroup(List<LocationStamp> stamps){
+            double total_distance = 0;
+            Location location1 = null;
+            Location location2 = new Location("pointB");
+            // Calculate:
+            for (LocationStamp s : stamps){
+                if (location1 == null){
+                    location1 = new Location("pointA");
+                    location1.setLatitude(s.getLatitudeE6() / 1E6);
+                    location1.setLongitude(s.getLongitudeE6() / 1E6);
+                    continue;
+                }
+                // Set new goal-LatLon
+                location2.setLatitude(s.getLatitudeE6() / 1E6);
+                location2.setLongitude(s.getLongitudeE6() / 1E6);
+                // Calculate distance:
+                total_distance += location1.distanceTo(location2);
+                // Set new start-location:
+                location1.set(location2);
+            }
+            total_distance = (double)Math.round((total_distance / 1000) * 100) / 100;
+            // Create group and data:
+            StatisticGroup track_group = new StatisticGroup("Track");
+            track_group.add(new Statistic<Double>(total_distance, "Km", "Total distance"));
+            return track_group;
+        }
+
+        /**
+         * Calculate average- and top-speed
+         */
+        private StatisticGroup getSpeedGroup(List<LocationStamp> stamps){
+            int top_speed = 0;
+            int all_speed = 0; // needed for average calculation.
+            for (LocationStamp s : stamps){
+                all_speed += s.getSpeed();
+                if (top_speed < s.getSpeed()) top_speed = s.getSpeed();
+            }
+            int average_speed = all_speed / stamps.size();
+            StatisticGroup speed_group = new StatisticGroup("Speed");
+            speed_group.add(new Statistic<Integer>(top_speed, "Km/h", "Top Speed"));
+            speed_group.add(new Statistic<Integer>(average_speed, "Km/h", "Average Speed"));
+            return speed_group;
+        }
+
+        /**
+         * Query the list of {@code LocationStamp}s for this tour from the DB.
+         */
+        private List<LocationStamp> getStamps(){
             try {
-                Dao<LocationStamp, Void> dao = TourActivity.this.getHelper().getLocationStampDao();
-                locs = dao.queryForEq("tour_id", current_tour.getId());
+                Dao<LocationStamp, Void> location_dao = TourActivity.this.getHelper().getLocationStampDao();
+                QueryBuilder<LocationStamp, Void> builder = location_dao.queryBuilder();
+                builder.where().eq("tour_id", current_tour.getId());
+                builder.orderBy("timestamp", true);
+                return builder.query();
             } catch (SQLException e) {
                 e.printStackTrace();
-                return null;
+                return Collections.emptyList();
             }
-            int counter = 0;
-            XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
-            TimeSeries speed_series = new TimeSeries("Your Speed (in Km/h)");
-            for (LocationStamp stamp : locs){
-                speed_series.add(
-                        stamp.getTimestamp(),
-                        stamp.getSpeed()
-                );
-                publishProgress(++counter, locs.size());
-            }
-            dataset.addSeries(speed_series);
-            return dataset;
         }
 
         @Override
-        protected void onProgressUpdate(Integer... stats){
-            progress.setMessage("Progressing "+stats[0]+" of "+stats[1]+" items.");
-        }
-
-        @Override
-        protected void onPostExecute(XYMultipleSeriesDataset dataset){
-            if (dataset != null){
-                XYSeriesRenderer seriesRenderer = new XYSeriesRenderer();
-                seriesRenderer.setFillPoints(false);
-                seriesRenderer.setLineWidth(2);
-                seriesRenderer.setStroke(BasicStroke.SOLID);
-
-                XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
-                renderer.setYTitle("Speed (in Km/h)");
-                renderer.setXTitle("Time");
-                renderer.setXLabels(8);
-                renderer.addSeriesRenderer(seriesRenderer);
-                charts.addView(ChartFactory.getTimeChartView(
-                        TourActivity.this, dataset, renderer, null));
+        protected void onPostExecute(ExpandableStatisticAdapter adapter){
+            if (adapter != null){
+                statistics.setAdapter(adapter);
+                // Expand all list entries:
+                for (int i = 0; i < adapter.getGroupCount(); i++)
+                    statistics.expandGroup(i);
             }
             progress.dismiss();
         }
-    }
+    };
 
     /**
      * <p>This method will cause the {@code TrackingService} to start tracking
@@ -149,6 +206,7 @@ public class TourActivity extends BaseActivity{
      * @see #stopTracking()
      */
     private boolean startTracking(Tour tour){
+        // TODO Check if GPS is enabled!!!
         if (isTrackingServiceRunning()) return true;
         // Start the service:
         Intent track_service = new Intent(this, TrackingService.class);
