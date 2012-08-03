@@ -41,22 +41,23 @@ public class Main extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         tour_list = (ListView)this.findViewById(R.id.tour_list);
-        tour_adapter = new ArrayAdapter<Tour>(this, android.R.layout.simple_list_item_1);
-        tour_list.setAdapter(tour_adapter);
         tour_list.setOnItemClickListener(tour_click);
+        // We'll load the contextual menus, depending on the current APIs available:
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
+            tour_adapter = new ArrayAdapter<Tour>(this,
+                    android.R.layout.simple_list_item_multiple_choice);
+            makeActionbarContextMenu();
+        } else {
+            tour_adapter = new ArrayAdapter<Tour>(this, android.R.layout.simple_list_item_1);
+            Main.this.registerForContextMenu(tour_list);
+        }
+        tour_list.setAdapter(tour_adapter);
         // Load the content a-sync:
         progress = new ProgressDialog(this);
         progress.setIndeterminate(true);
         progress.setMessage("Reading Tours from Database...");
         progress.setCancelable(false);
         new LoadTours().execute();
-        // We'll load the contextual menus, depending on the current APIs available:
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
-            makeActionbarContextMenu();
-            // TODO Make multiple selections visible
-        } else {
-            Main.this.registerForContextMenu(tour_list);
-        }
     }
 
     /**
