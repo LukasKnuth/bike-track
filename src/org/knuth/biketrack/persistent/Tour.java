@@ -20,6 +20,9 @@ import java.util.Date;
 @DatabaseTable(tableName = "tours")
 public class Tour implements Parcelable{
 
+    // TODO Add mutable tour-length field and let user increase it.
+    // TODO Add statistics-field for average speed, etc to not recalculate every time.
+
     @DatabaseField(generatedId = true)
     private int id;
     @DatabaseField

@@ -6,6 +6,7 @@
     <string name="main.menu.newTour">Create Tour</string>
     <string name="tourActivity.menu.showRecords">Show records</string>
     <string name="tourActivity.menu.showMap">Show Track-Map</string>
+    <string name="tourActivtiy.menu.trackingActivity">Show live info</string>
     <string name="main.contextmenu.delete">Delete</string>
     <string name="main.contextmenu.rename">Rename</string>
 </resources>

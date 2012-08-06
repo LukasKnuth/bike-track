@@ -1,4 +1,4 @@
-package org.knuth.biketrack;
+package org.knuth.biketrack.service;
 
 import android.app.Service;
 import android.content.Context;
@@ -7,12 +7,14 @@ import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.util.Log;
 import com.j256.ormlite.android.apptools.OrmLiteBaseService;
 import com.j256.ormlite.dao.Dao;
+import org.knuth.biketrack.Main;
 import org.knuth.biketrack.persistent.DatabaseHelper;
 import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.persistent.Tour;
@@ -40,6 +42,9 @@ public class TrackingService extends OrmLiteBaseService<DatabaseHelper> {
     /** The current {@code Tour} we're taking. */
     private Tour current_tour;
 
+    /** The callback to send updated to the Activity */
+    private TrackingListener callback;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -47,20 +52,24 @@ public class TrackingService extends OrmLiteBaseService<DatabaseHelper> {
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
+                LocationStamp data = null;
                 try {
                     Dao<LocationStamp, Void> location_dao = getHelper().getLocationStampDao();
-                    location_dao.create(new LocationStamp(
+                    data = new LocationStamp(
                             (int)(location.getLatitude() * 1E6), // Use the E6-format.
                             (int)(location.getLongitude() * 1E6),
                             new Date(),
                             (int)(location.getSpeed() * 3.6), // Calculate Km/h
-                            current_tour
-                    ));
+                            current_tour);
+                    location_dao.create(data);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 } finally {
                     mLastLocationMillis = SystemClock.elapsedRealtime();
-                    Log.v(Main.LOG_TAG, "Got something!");
+                    if (callback != null){
+                        // Send the collected data to the activity:
+                        if (data != null) callback.update(data);
+                    }
                 }
             }
 
@@ -88,12 +97,11 @@ public class TrackingService extends OrmLiteBaseService<DatabaseHelper> {
                     case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
                         if ((SystemClock.elapsedRealtime() - mLastLocationMillis) > 3000) {
                             // The fix has been lost.
-                            // TODO Bind the service to a UI-component and deliver messages here.
+                            // TODO Add this information to the callback to TrackingActivity!
                         }
                         break;
                     case GpsStatus.GPS_EVENT_FIRST_FIX:
                         // We have a fix!
-                        // TODO Bind the service to a UI-component and deliver messages here.
                         break;
                 }
             }
@@ -130,8 +138,50 @@ public class TrackingService extends OrmLiteBaseService<DatabaseHelper> {
         super.onDestroy();
     }
 
+    /*
+        -------------- Binder Stuff.
+     */
+    private TrackingBinder binder;
+
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        if (binder == null)
+            binder = new TrackingBinder();
+        return this.binder;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent){
+        this.callback = null;
+        return false;
+    }
+
+    /**
+     * A binder-class which clients to bind for callbacks from the
+     *  Service.
+     */
+    public class TrackingBinder extends Binder{
+
+        /**
+         * <p>Request updates from the Service.</p>
+         * <p>This method will be called as soon as the Service receives new
+         *  information from the GPS module.</p>
+         * @param callback the callback to use.
+         */
+        public void requestUpdates(TrackingListener callback){
+            if (callback == null)
+                throw new NullPointerException("[callback] can't be null!");
+            TrackingService.this.callback = callback;
+        }
+
+        /**
+         * <p>Returns the {@link Tour}-object, which is currently being tracked.</p>
+         * <p><b>Important!</b> This {@code Tour}-object is <u>not</u> immutable! You should
+         *  not modify the returned instance!</p>
+         */
+        public Tour getTrackedTour(){
+            // TODO Return defensive copy or keep this way (auto-updated)?
+            return TrackingService.this.current_tour;
+        }
     }
 }

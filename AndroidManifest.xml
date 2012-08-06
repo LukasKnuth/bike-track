@@ -21,8 +21,9 @@
         <activity android:name="DatabaseActivity" />
         <activity android:name="TrackMapActivity" />
         <activity android:name="TourActivity" />
+        <activity android:name="TrackingActivity" android:theme="@style/Theme.Sherlock.NoActionBar"/>
 
-        <service android:name="TrackingService" android:exported="false" />
+        <service android:name=".service.TrackingService" android:exported="false" />
 
         <uses-library android:name="com.google.android.maps" />
     </application>

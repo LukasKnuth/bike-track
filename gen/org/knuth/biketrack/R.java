@@ -964,9 +964,9 @@ containing a value of this type.
         public static final int edit_query=0x7f050027;
         public static final int homeAsUp=0x7f050006;
         public static final int listMode=0x7f050002;
-        public static final int main_context_delete=0x7f05003f;
-        public static final int main_context_rename=0x7f050040;
-        public static final int mapview=0x7f05003e;
+        public static final int main_context_delete=0x7f050041;
+        public static final int main_context_rename=0x7f050042;
+        public static final int mapview=0x7f050040;
         public static final int new_tour_name=0x7f050037;
         public static final int normal=0x7f050001;
         public static final int rename_dialog_root=0x7f050036;
@@ -984,6 +984,8 @@ containing a value of this type.
         public static final int tour_dialog_root=0x7f050033;
         public static final int tour_list=0x7f050032;
         public static final int tour_name=0x7f050034;
+        public static final int tracking_current_speed=0x7f05003f;
+        public static final int tracking_tour_name=0x7f05003e;
         public static final int useLogo=0x7f050004;
         public static final int wrap_content=0x7f050000;
     }
@@ -1022,7 +1024,8 @@ containing a value of this type.
         public static final int statistic_group_view=0x7f03001c;
         public static final int statistic_item_view=0x7f03001d;
         public static final int tour=0x7f03001e;
-        public static final int trackmap=0x7f03001f;
+        public static final int tracking=0x7f03001f;
+        public static final int trackmap=0x7f030020;
     }
     public static final class menu {
         public static final int main_context_menu=0x7f0c0000;
@@ -1079,13 +1082,14 @@ containing a value of this type.
          */
         public static final int abs__shareactionprovider_share_with_application=0x7f0a0009;
         public static final int app_name=0x7f0a000f;
-        public static final int main_contextmenu_delete=0x7f0a0013;
-        public static final int main_contextmenu_rename=0x7f0a0014;
+        public static final int main_contextmenu_delete=0x7f0a0014;
+        public static final int main_contextmenu_rename=0x7f0a0015;
         /**  ActionBar menus - convention: [Activity].menu.[Name] 
          */
         public static final int main_menu_newTour=0x7f0a0010;
         public static final int tourActivity_menu_showMap=0x7f0a0012;
         public static final int tourActivity_menu_showRecords=0x7f0a0011;
+        public static final int tourActivtiy_menu_trackingActivity=0x7f0a0013;
     }
     public static final class style {
         public static final int DialogWindowTitle_Sherlock=0x7f0b0036;

@@ -26,6 +26,7 @@ import org.knuth.biketrack.adapter.statistic.Statistic;
 import org.knuth.biketrack.adapter.statistic.StatisticGroup;
 import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.persistent.Tour;
+import org.knuth.biketrack.service.TrackingService;
 
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -49,6 +50,8 @@ public class TourActivity extends BaseActivity{
     private ExpandableListView statistics;
     private Button start_stop;
     private ProgressDialog progress;
+    /** ActionBar item, only shown when tracking to get back to {@code TrackingActivity} */
+    private MenuItem live_view;
 
     @Override
     public void onCreate(Bundle saved){
@@ -65,7 +68,7 @@ public class TourActivity extends BaseActivity{
         this.setTitle(current_tour.toString());
         // Set the buttons text:
         start_stop = (Button)this.findViewById(R.id.start_stop_tracking);
-        if (isTrackingServiceRunning()){
+        if (isTrackingServiceRunning(this)){
             start_stop.setText("Stop tracking");
         } else {
             start_stop.setText("Start tracking my position!");
@@ -73,7 +76,7 @@ public class TourActivity extends BaseActivity{
         start_stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (isTrackingServiceRunning()){
+                if (isTrackingServiceRunning(TourActivity.this)){
                     if (stopTracking()) start_stop.setText("Start tracking my position!");
                 } else {
                     if (startTracking(current_tour)) start_stop.setText("Stop tracking");
@@ -212,12 +215,15 @@ public class TourActivity extends BaseActivity{
      */
     private boolean startTracking(Tour tour){
         if (!checkGpsEnabled()) return false;
-        if (isTrackingServiceRunning()) return true;
+        if (isTrackingServiceRunning(this)) return true;
         // Start the service:
         Intent track_service = new Intent(this, TrackingService.class);
         track_service.putExtra(TrackingService.TOUR_KEY, tour);
         if (this.startService(track_service) != null){
             Toast.makeText(this, "Started tracking. Ride like Hell!", Toast.LENGTH_LONG).show();
+            live_view.setVisible(true);
+            Intent tracking_activity = new Intent(this, TrackingActivity.class);
+            this.startActivity(tracking_activity);
             return true;
         } else
             Log.e(Main.LOG_TAG, "Couldn't start tracking-service!");
@@ -235,6 +241,7 @@ public class TourActivity extends BaseActivity{
         // Stop the service:
         if (this.stopService(new Intent(this, TrackingService.class))){
             Toast.makeText(this, "The drones are no longer following you.", Toast.LENGTH_LONG).show();
+            live_view.setVisible(false);
             return true;
         } else
             Log.e(Main.LOG_TAG, "Couldn't stopp tracking-service!");
@@ -246,10 +253,10 @@ public class TourActivity extends BaseActivity{
      * @return whether the {@code TrackingService} is already running or not.
      * @see <a href="http://stackoverflow.com/a/5921190/717341">SO answer</a>
      */
-    private boolean isTrackingServiceRunning() {
-        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+    public static boolean isTrackingServiceRunning(Context context) {
+        ActivityManager manager = (ActivityManager) context.getSystemService(ACTIVITY_SERVICE);
         for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if ("org.knuth.biketrack.TrackingService".equals(service.service.getClassName())) {
+            if ("org.knuth.biketrack.service.TrackingService".equals(service.service.getClassName())) {
                 return true;
             }
         }
@@ -310,6 +317,17 @@ public class TourActivity extends BaseActivity{
                     return true;
                 }
             });
+        live_view = menu.add(R.string.tourActivtiy_menu_trackingActivity)
+            .setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_ALWAYS|MenuItem.SHOW_AS_ACTION_WITH_TEXT)
+            .setIcon(android.R.drawable.ic_menu_mylocation)
+            .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    Intent tracking_activity = new Intent(TourActivity.this, TrackingActivity.class);
+                    TourActivity.this.startActivity(tracking_activity);
+                    return true;
+                }
+            }).setVisible(false);
         return true;
     }
 
