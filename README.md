@@ -17,7 +17,7 @@ When the app is finished, the following capabilities will be implemented:
 
 ## Get it
 
-I'm not yet sure if the application will ever make it to Google Play. Therefor, you'll want to download the `.apk`-file from the download section of this project, copy it to your device and install it manually.
+I'm not yet sure if the application will ever make it to Google Play. Therefore, you'll want to download the `.apk`-file from the download section of this project, copy it to your device and install it manually.
 
 If you ever pirated an application, you'll probably know how to do that ;)
 
@@ -41,8 +41,10 @@ If you encounter any **problems or bugs**, please also *open a ticket* on the [I
 
 ## ToDo
 
-* Create a clearer data-view (for tours) including average speed, track-length, etc.
 * Add charts for all collected data (AchartEngine, JavaDoc for ChartFactory).
 * Add measuring altitude (see http://stackoverflow.com/questions/6141390)
 * Make the TrackerService bind-able and use the messages to get the GPS-state.
 * Change Font to Roboto (http://developer.android.com/design/style/typography.html)
+* Add Photo-taking capabilities (Tour pictures, with GEO-Tags, etc)
+* New Tour-Activity and Main-Activity Listview layout (with the images above and some data about the tour)
+* Also remove the need to give a name/date and find out the start-location (City) and the current date
