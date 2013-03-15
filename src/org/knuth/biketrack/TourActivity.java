@@ -87,6 +87,8 @@ public class TourActivity extends BaseActivity{
             }
         });
         Log.v(Main.LOG_TAG, "Current tour has id of "+current_tour.getId());
+        // Enable going back from the ActionBar:
+        this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         // Query for the data and create the statistics:
         progress = new ProgressDialog(this);
         progress.setMessage("Doing the Math...");
@@ -332,6 +334,18 @@ public class TourActivity extends BaseActivity{
                 }
             }).setVisible(false);
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected (MenuItem item){
+        super.onOptionsItemSelected(item);
+        switch (item.getItemId()){
+            // If the Logo in the ActionBar is pressed, simulate a "BACK"-button press.
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+        }
+        return false;
     }
 
     public void showRecords(MenuItem v){
