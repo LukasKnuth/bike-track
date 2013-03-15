@@ -53,6 +53,9 @@ public class TourActivity extends BaseActivity{
     /** ActionBar item, only shown when tracking to get back to {@code TrackingActivity} */
     private MenuItem live_view;
 
+    // TODO React on orientation-change (without reloading)
+    // TODO Orientation-change while loading crashes app (cancel AsyncTask!)
+
     @Override
     public void onCreate(Bundle saved){
         super.onCreate(saved);

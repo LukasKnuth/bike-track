@@ -33,6 +33,9 @@ public class TrackMapActivity extends MapActivity {
 
     private Tour current_tour;
 
+    // TODO Don't reload on Orientation-change
+    // TODO Make this one Full-Screen.
+
     @Override
     public void onCreate(Bundle saved){
         super.onCreate(saved);
@@ -104,6 +107,7 @@ public class TrackMapActivity extends MapActivity {
         @Override
         protected void onPostExecute(GeoPoint start){
             if (start != null){
+                // TODO When entering, Zoom out to see the FULL track.
                 // Show the start-point:
                 MapController controller = map.getController();
                 controller.animateTo(start);

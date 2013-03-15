@@ -25,7 +25,7 @@ If you ever pirated an application, you'll probably know how to do that ;)
 
 At the moment, you'll need to have the *Android SDK*, *Platform 4.1* and the *Google APIs* for that platform, to successfully build the source yourself.
 
-Also, you'll want to clone the git submodules before building the application.
+Also, you'll want to clone the git sub-modules before building the application.
 
 Build scripts and other helpers *may* follow.
 
