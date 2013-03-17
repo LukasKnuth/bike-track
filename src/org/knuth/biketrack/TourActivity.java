@@ -113,6 +113,9 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             // Expand all list entries:
             for (int i = 0; i < adapter.getGroupCount(); i++)
                 statistics.expandGroup(i);
+        } else {
+            // There are no stamps for this tour:
+            statistics.getEmptyView().setVisibility(View.GONE);
         }
     }
 
