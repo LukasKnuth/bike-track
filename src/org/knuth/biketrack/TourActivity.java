@@ -3,7 +3,6 @@ package org.knuth.biketrack;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -16,6 +15,7 @@ import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ExpandableListView;
 import android.widget.Toast;
@@ -53,7 +53,6 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
 
     private ExpandableListView statistics;
     private Button start_stop;
-    private ProgressDialog progress;
     /** ActionBar item, only shown when tracking to get back to {@code TrackingActivity} */
     private MenuItem live_view;
 
@@ -90,24 +89,17 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
         Log.v(Main.LOG_TAG, "Current tour has id of "+current_tour.getId());
         // Enable going back from the ActionBar:
         this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        // Set the empty-view for the list:
+        View empty_view = this.getLayoutInflater().inflate(R.layout.statistic_empty_view, null);
+        ((ViewGroup) statistics.getParent()).addView(empty_view); // See http://stackoverflow.com/q/3727063/717341
+        statistics.setEmptyView(empty_view);
         // Query for the data and create the statistics:
         getSupportLoaderManager().initLoader(StatisticLoader.STATISTIC_LOADER_ID, null, this);
     }
 
     @Override
-    public void onStop(){
-        super.onStop();
-        if (progress != null) progress.dismiss(); // Just so we don't leak the window...
-    }
-
-    @Override
     public Loader<ExpandableStatisticAdapter> onCreateLoader(int id, Bundle args) {
         if (id == StatisticLoader.STATISTIC_LOADER_ID) {
-            // Show an animation:
-            progress = new ProgressDialog(this);
-            progress.setMessage("Doing the Math...");
-            progress.setIndeterminate(true);
-            progress.show();
             // Create the loader:
             return new StatisticLoader(this, current_tour);
         }
@@ -122,7 +114,6 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             for (int i = 0; i < adapter.getGroupCount(); i++)
                 statistics.expandGroup(i);
         }
-        if (progress != null) progress.dismiss();
     }
 
     @Override
