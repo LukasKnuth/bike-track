@@ -2,11 +2,13 @@ package org.knuth.biketrack;
 
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -15,26 +17,24 @@ import android.view.ViewGroup;
 import android.widget.*;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
+import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
+import org.knuth.biketrack.persistent.DatabaseHelper;
 import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.persistent.Tour;
 import org.knuth.biketrack.service.TrackingService;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
-public class Main extends BaseActivity {
+public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<Collection<Tour>> {
 
     /** The Tag to use when logging from this application! */
     public static final String LOG_TAG = "BikeTrack";
 
     private ListView tour_list;
     private ArrayAdapter<Tour> tour_adapter;
-    private ProgressDialog progress;
 
     /** Called when the activity is first created. */
     @Override
@@ -53,13 +53,72 @@ public class Main extends BaseActivity {
             Main.this.registerForContextMenu(tour_list);
         }
         tour_list.setAdapter(tour_adapter);
+        // Set the empty-view for the list:
+        View empty_view = this.getLayoutInflater().inflate(R.layout.statistic_empty_view, null);
+        ((ViewGroup) tour_list.getParent()).addView(empty_view); // See http://stackoverflow.com/q/3727063/717341
+        tour_list.setEmptyView(empty_view);
         // Load the content a-sync:
-        progress = new ProgressDialog(this);
-        progress.setIndeterminate(true);
-        progress.setMessage("Reading Tours from Database...");
-        progress.setCancelable(false);
-        new LoadTours().execute();
+        this.getSupportLoaderManager().initLoader(ToursLoader.TOUR_LOADER_ID, null, this);
     }
+
+    /**
+     * This will asynchronously load all current tours from the database.
+     */
+    private static class ToursLoader extends AsyncTaskLoader<Collection<Tour>> {
+
+        private static final int TOUR_LOADER_ID = 2;
+        private final Context context;
+
+        public ToursLoader(Context context) {
+            super(context);
+            this.context = context;
+        }
+
+        @Override
+        protected void onStartLoading() {
+            forceLoad(); // This seems to be a bug in the SupportLibrary.
+            // See http://stackoverflow.com/q/8606048/717341
+        }
+
+        @Override
+        public Collection<Tour> loadInBackground() {
+            try {
+                Dao<Tour, Integer> tour_dao = OpenHelperManager.getHelper(
+                        context, DatabaseHelper.class
+                ).getTourDao();
+                QueryBuilder<Tour, Integer> builder = tour_dao.queryBuilder();
+                builder.orderBy("date", false);
+                return builder.query();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public Loader<Collection<Tour>> onCreateLoader(int id, Bundle bundle) {
+        if (id == ToursLoader.TOUR_LOADER_ID){
+            return new ToursLoader(this);
+        }
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Collection<Tour>> collectionLoader, Collection<Tour> tours) {
+        if (tours.size() > 0){
+            tour_adapter.clear();
+            for (Tour t : tours){
+                tour_adapter.add(t);
+            }
+        } else {
+            // There are no tours, yet.
+            tour_list.getEmptyView().setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Collection<Tour>> collectionLoader) {}
 
     /**
      * Create a new Tour.
@@ -86,11 +145,10 @@ public class Main extends BaseActivity {
                                 // Make the date:
                                 Calendar calendar = Calendar.getInstance();
                                 calendar.set(date.getYear(), date.getMonth(), date.getDayOfMonth());
-                                dao.create(
-                                        new Tour(name.getText().toString(), calendar.getTime())
-                                );
+                                Tour new_tour = new Tour(name.getText().toString(), calendar.getTime());
+                                dao.create(new_tour);
                                 // Reload the tours:
-                                new LoadTours().execute();
+                                tour_adapter.insert(new_tour, 0);
                                 dialogInterface.dismiss();
                             } catch (SQLException e) {
                                 e.printStackTrace();
@@ -220,39 +278,6 @@ public class Main extends BaseActivity {
         }
     };
 
-    /**
-     * This will asynchronously load all current tours from the database and display
-     *  them in the {@code tour_list}.
-     */
-    private class LoadTours extends AsyncTask<Void, Void, Collection<Tour>>{
-
-        @Override
-        protected void onPreExecute(){
-            progress.show();
-        }
-
-        @Override
-        protected Collection<Tour> doInBackground(Void... voids) {
-            try {
-                Dao<Tour, Integer> tour_dao = Main.this.getHelper().getTourDao();
-                QueryBuilder<Tour, Integer> builder = tour_dao.queryBuilder();
-                builder.orderBy("date", false);
-                return builder.query();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            return new ArrayList<Tour>(0);
-        }
-
-        @Override
-        protected void onPostExecute(Collection<Tour> tours){
-            tour_adapter.clear();
-            for (Tour t : tours)
-                tour_adapter.add(t);
-            progress.dismiss();
-        }
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         /*
@@ -289,15 +314,16 @@ public class Main extends BaseActivity {
                                     .getLocationStampDao();
                             // Recursive delete all LocationStamps of that tour.
                             for (Tour tour : tours) {
+                                // TODO Use the PDO here!
                                 int deleted2 = stamp_dao.executeRaw("DELETE FROM loc_stamp " +
                                         "WHERE tour_id = "+tour.getId());
                                 Log.v(LOG_TAG, "Deleted "+deleted2+" locationstamps from "+tour.getName());
+                                tour_adapter.remove(tour);
                             }
                             if (deleted == tours.size()) {
                                 Toast.makeText(Main.this, "Successfully deleted " + deleted + " tours",
                                         Toast.LENGTH_SHORT).show();
                             }
-                            new LoadTours().execute();
                         } catch (SQLException e) {
                             e.printStackTrace();
                         }
@@ -347,7 +373,7 @@ public class Main extends BaseActivity {
                         try {
                             Main.this.getHelper().getTourDao().update(tour);
                             // Reload everything:
-                            new LoadTours().execute();
+                            tour_adapter.notifyDataSetChanged();
                         } catch (SQLException e) {
                             e.printStackTrace();
                         }
