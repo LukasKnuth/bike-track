@@ -1,6 +1,6 @@
 package org.knuth.biketrack;
 
-import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import org.knuth.biketrack.persistent.DatabaseHelper;
 
@@ -14,7 +14,7 @@ import org.knuth.biketrack.persistent.DatabaseHelper;
  * @author Lukas Knuth
  * @version 1.0
  */
-public class BaseActivity extends SherlockActivity {
+public class BaseActivity extends SherlockFragmentActivity {
 
     private DatabaseHelper databaseHelper = null;
 

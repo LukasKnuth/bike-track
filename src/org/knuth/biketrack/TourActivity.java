@@ -9,9 +9,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -19,11 +21,13 @@ import android.widget.ExpandableListView;
 import android.widget.Toast;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
+import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
 import org.knuth.biketrack.adapter.statistic.ExpandableStatisticAdapter;
 import org.knuth.biketrack.adapter.statistic.Statistic;
 import org.knuth.biketrack.adapter.statistic.StatisticGroup;
+import org.knuth.biketrack.persistent.DatabaseHelper;
 import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.persistent.Tour;
 import org.knuth.biketrack.service.TrackingService;
@@ -42,7 +46,7 @@ import java.util.List;
  * @author Lukas Knuth
  * @version 1.0
  */
-public class TourActivity extends BaseActivity{
+public class TourActivity extends BaseActivity implements LoaderManager.LoaderCallbacks<ExpandableStatisticAdapter>{
 
     /** The tour which is currently shown on this Activity */
     private Tour current_tour;
@@ -52,9 +56,6 @@ public class TourActivity extends BaseActivity{
     private ProgressDialog progress;
     /** ActionBar item, only shown when tracking to get back to {@code TrackingActivity} */
     private MenuItem live_view;
-
-    // TODO React on orientation-change (without reloading)
-    // TODO Orientation-change while loading crashes app (cancel AsyncTask!)
 
     @Override
     public void onCreate(Bundle saved){
@@ -90,21 +91,67 @@ public class TourActivity extends BaseActivity{
         // Enable going back from the ActionBar:
         this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         // Query for the data and create the statistics:
-        progress = new ProgressDialog(this);
-        progress.setMessage("Doing the Math...");
-        progress.setIndeterminate(true);
-        new StatisticLoader().execute();
+        getSupportLoaderManager().initLoader(StatisticLoader.STATISTIC_LOADER_ID, null, this);
     }
 
-    private class StatisticLoader extends AsyncTask<Void, Void, ExpandableStatisticAdapter>{
+    @Override
+    public void onStop(){
+        super.onStop();
+        if (progress != null) progress.dismiss(); // Just so we don't leak the window...
+    }
 
-        @Override
-        protected void onPreExecute(){
+    @Override
+    public Loader<ExpandableStatisticAdapter> onCreateLoader(int id, Bundle args) {
+        if (id == StatisticLoader.STATISTIC_LOADER_ID) {
+            // Show an animation:
+            progress = new ProgressDialog(this);
+            progress.setMessage("Doing the Math...");
+            progress.setIndeterminate(true);
             progress.show();
+            // Create the loader:
+            return new StatisticLoader(this, current_tour);
+        }
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<ExpandableStatisticAdapter> loader, ExpandableStatisticAdapter adapter) {
+        if (adapter != null){
+            statistics.setAdapter(adapter);
+            // Expand all list entries:
+            for (int i = 0; i < adapter.getGroupCount(); i++)
+                statistics.expandGroup(i);
+        }
+        if (progress != null) progress.dismiss();
+    }
+
+    @Override
+    public void onLoaderReset(Loader<ExpandableStatisticAdapter> loader) {
+    }
+
+    /**
+     * Loads the data for the current tour from the DB and puts everything in an Adapter.
+     */
+    private static class StatisticLoader extends AsyncTaskLoader<ExpandableStatisticAdapter> {
+
+        public static final int STATISTIC_LOADER_ID = 1;
+        private final Tour current_tour;
+        private final Context context;
+
+        public StatisticLoader(Context context, Tour tour) {
+            super(context);
+            this.context = context;
+            this.current_tour = tour;
         }
 
         @Override
-        protected ExpandableStatisticAdapter doInBackground(Void... voids) {
+        protected void onStartLoading() {
+            forceLoad(); // This seems to be a bug in the SupportLibrary.
+                         // See http://stackoverflow.com/q/8606048/717341
+        }
+
+        @Override
+        public ExpandableStatisticAdapter loadInBackground() {
             List<LocationStamp> stamps = getStamps();
             if (stamps.isEmpty()) return null;
             // Fill the Adapter:
@@ -113,7 +160,7 @@ public class TourActivity extends BaseActivity{
             groups.add( getTrackGroup(stamps) );
             groups.add( getTimeGroup(stamps) );
 
-            return new ExpandableStatisticAdapter(TourActivity.this, groups);
+            return new ExpandableStatisticAdapter(context, groups);
         }
 
         /**
@@ -186,7 +233,9 @@ public class TourActivity extends BaseActivity{
          */
         private List<LocationStamp> getStamps(){
             try {
-                Dao<LocationStamp, Void> location_dao = TourActivity.this.getHelper().getLocationStampDao();
+                Dao<LocationStamp, Void> location_dao = OpenHelperManager.getHelper(
+                        context, DatabaseHelper.class
+                ).getLocationStampDao();
                 QueryBuilder<LocationStamp, Void> builder = location_dao.queryBuilder();
                 builder.where().eq("tour_id", current_tour.getId());
                 builder.orderBy("timestamp", true);
@@ -194,19 +243,11 @@ public class TourActivity extends BaseActivity{
             } catch (SQLException e) {
                 e.printStackTrace();
                 return Collections.emptyList();
+            } finally {
+                OpenHelperManager.releaseHelper(); //Decrease the ref-count!
             }
         }
 
-        @Override
-        protected void onPostExecute(ExpandableStatisticAdapter adapter){
-            if (adapter != null){
-                statistics.setAdapter(adapter);
-                // Expand all list entries:
-                for (int i = 0; i < adapter.getGroupCount(); i++)
-                    statistics.expandGroup(i);
-            }
-            progress.dismiss();
-        }
     };
 
     /**
