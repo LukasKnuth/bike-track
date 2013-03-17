@@ -19,7 +19,7 @@
             </intent-filter>
         </activity>
         <activity android:name="DatabaseActivity" />
-        <activity android:name="TrackMapActivity" />
+        <activity android:name="TrackMapActivity" android:theme="@android:style/Theme.NoTitleBar.Fullscreen"/>
         <activity android:name="TourActivity" />
         <activity android:name="TrackingActivity" android:theme="@style/Theme.Sherlock.NoActionBar"/>
 

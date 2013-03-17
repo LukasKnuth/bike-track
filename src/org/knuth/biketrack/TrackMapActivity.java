@@ -34,7 +34,6 @@ public class TrackMapActivity extends MapActivity {
     private Tour current_tour;
 
     // TODO Don't reload on Orientation-change
-    // TODO Make this one Full-Screen.
 
     @Override
     public void onCreate(Bundle saved){
