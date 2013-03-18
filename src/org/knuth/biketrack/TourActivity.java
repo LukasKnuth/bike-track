@@ -179,6 +179,7 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
          * Calculate the length of the track
          */
         private StatisticGroup getTrackGroup(List<LocationStamp> stamps){
+            // TODO Migrate this to not use E6 anymore. Also, new way (V2) available?
             double total_distance = 0;
             Location location1 = null;
             Location location2 = new Location("pointB");

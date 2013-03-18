@@ -1,11 +1,18 @@
 package org.knuth.biketrack;
 
 import android.app.ProgressDialog;
-import android.graphics.*;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
-import com.google.android.maps.*;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.Dao;
 import org.knuth.biketrack.persistent.DatabaseHelper;
@@ -14,8 +21,6 @@ import org.knuth.biketrack.persistent.Tour;
 import org.knuth.biketrack.service.TrackingService;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -24,31 +29,32 @@ import java.util.List;
  * @author Lukas Knuth
  * @version 1.0
  */
-public class TrackMapActivity extends MapActivity {
+public class TrackMapActivity extends FragmentActivity {
 
-    private MapView map;
-    private Paint track_paint;
+    private GoogleMap map;
+    private PolylineOptions track;
 
     private ProgressDialog progress;
 
     private Tour current_tour;
 
     // TODO Don't reload on Orientation-change
+    // TODO Include the Google Play services license (point in preferences?). See https://developers.google.com/maps/documentation/android/intro
 
     @Override
     public void onCreate(Bundle saved){
         super.onCreate(saved);
-        this.setContentView(R.layout.trackmap);
-        map = (MapView) findViewById(R.id.mapview);
-        map.setBuiltInZoomControls(true);
-
+        if (readyToGo()){
+            this.setContentView(R.layout.trackmap);
+            map = ((SupportMapFragment) this.getSupportFragmentManager().findFragmentById(R.id.mapview)).getMap();
+        } else {
+            // No G-Play services on the device...
+            Log.e(Main.LOG_TAG, "No Google Play Services on this device!");
+            finish();
+        }
         // Setup the track-paint:
-        track_paint = new Paint();
-        track_paint.setColor(Color.GREEN);
-        track_paint.setStyle(Paint.Style.STROKE);
-        track_paint.setStrokeJoin(Paint.Join.ROUND);
-        track_paint.setStrokeCap(Paint.Cap.ROUND);
-        track_paint.setStrokeWidth(3);
+        track = new PolylineOptions();
+        track.color(Color.GREEN).width(3);
 
         // Get the current tour:
         Bundle extras = this.getIntent().getExtras();
@@ -65,15 +71,25 @@ public class TrackMapActivity extends MapActivity {
         new LoadTrack().execute(current_tour);
     }
 
-    @Override
-    protected boolean isRouteDisplayed() {
+    /**
+     * Checks if the "Google Play Services" (and therefor the Maps API) are amiable on this device.
+     * @return {@code true} if everything looks good, false otherwise.
+     */
+    private boolean readyToGo() {
+        int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+        if (status == ConnectionResult.SUCCESS) {
+            return true;
+        } else {
+            // TODO Test this!
+            GooglePlayServicesUtil.getErrorDialog(status, this, 1122).show();
+        }
         return false;
     }
 
     /**
      * Loads a specific track from the Database and displays it over the Map.
      */
-    private class LoadTrack extends AsyncTask<Tour, TrackOverlay, GeoPoint>{
+    private class LoadTrack extends AsyncTask<Tour, LatLng, LatLng>{
 
         @Override
         protected void onPreExecute(){
@@ -81,16 +97,17 @@ public class TrackMapActivity extends MapActivity {
         }
 
         @Override
-        protected GeoPoint doInBackground(Tour... tours) {
+        protected LatLng doInBackground(Tour... tours) {
             try {
                 Dao<LocationStamp, Void> location_dao = TrackMapActivity.this.getHelper().getLocationStampDao();
                 List<LocationStamp> stamps = location_dao.queryForEq("tour_id", tours[0].getId());
                 if (stamps.size() == 0) return null;
-                // Create overlay:
-                TrackOverlay overlay = new TrackOverlay();
-                overlay.addAll(stamps);
-                this.publishProgress(overlay);
-                return new GeoPoint(stamps.get(0).getLatitudeE6(), stamps.get(0).getLongitudeE6());
+                // Push the LatLng objects:
+                for (LocationStamp stamp : stamps){
+                    LatLng location = new LatLng(stamp.getLatitudeE6()/1e6, stamp.getLongitudeE6()/1e6); // TODO E6 Compatibility. Take out!
+                    this.publishProgress(location);
+                }
+                return new LatLng(stamps.get(0).getLatitudeE6()/1e6, stamps.get(0).getLongitudeE6()/1e6); // TODO Same as ^
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -98,64 +115,18 @@ public class TrackMapActivity extends MapActivity {
         }
 
         @Override
-        protected void onProgressUpdate(TrackOverlay... overlay){
-            // Display overlay:
-            map.getOverlays().add(overlay[0]);
+        protected void onProgressUpdate(LatLng... location){
+            // Append the new location:
+            track.add(location[0]);
         }
 
         @Override
-        protected void onPostExecute(GeoPoint start){
-            if (start != null){
-                // TODO When entering, Zoom out to see the FULL track.
-                // Show the start-point:
-                MapController controller = map.getController();
-                controller.animateTo(start);
-                controller.setZoom(19);
-            }
+        protected void onPostExecute(LatLng start){
+            map.addPolyline(track);
+            map.moveCamera(CameraUpdateFactory.newLatLng(start));
+            map.moveCamera(CameraUpdateFactory.zoomTo(19.0f));
+            // TODO When entering, Zoom out to see the FULL track.
             progress.dismiss();
-        }
-    }
-
-    /**
-     * The overlay-class to draw the actual track on the map.
-     */
-    private class TrackOverlay extends Overlay {
-
-        private final ArrayList<LocationStamp> stamps;
-
-        public TrackOverlay(){
-            stamps = new ArrayList<LocationStamp>();
-        }
-
-        public void addAll(Collection<LocationStamp> coll){
-            if (coll == null)
-                throw new NullPointerException("Collection can't be null!");
-            stamps.addAll(coll);
-        }
-
-        @Override
-        public void draw(Canvas canvas, MapView mapView, boolean shadow){
-            super.draw(canvas, mapView, shadow);
-            if (shadow) return; // We don't draw shadow! (Yet)
-            // Draw all the points:
-            Projection projection = mapView.getProjection();
-            Path track = new Path();
-            // Set the start-point:
-            Point p = new Point();
-            projection.toPixels(new GeoPoint(
-                    stamps.get(0).getLatitudeE6(), stamps.get(0).getLongitudeE6()
-            ), p);
-            track.moveTo((float)p.x, (float)p.y);
-            // Itterate:
-            for (int i = 1; i < stamps.size(); i++){
-                projection.toPixels(new GeoPoint(
-                        stamps.get(i).getLatitudeE6(), stamps.get(i).getLongitudeE6()
-                ), p);
-                // add the next line-point:
-                track.lineTo((float)p.x, (float)p.y);
-            }
-            // Draw:
-            canvas.drawPath(track, track_paint);
         }
     }
 

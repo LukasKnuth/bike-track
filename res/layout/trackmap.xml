@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.maps.MapView
-        xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:apiKey="05LUAwt6RCGJRXwR5oscsDZYp2WTPonQW_X8awQ"
-    android:id="@+id/mapview"
-    android:clickable="true"
+<fragment xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:map="http://schemas.android.com/apk/res-auto"
+
+          android:id="@+id/mapview"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:name="com.google.android.gms.maps.SupportMapFragment"
+
+          map:mapType="normal"
+          map:uiCompass="true"
+          map:uiRotateGestures="true"
+          map:uiScrollGestures="true"
+          map:uiTiltGestures="true"
+          map:uiZoomControls="true"
+          map:uiZoomGestures="true"
 />

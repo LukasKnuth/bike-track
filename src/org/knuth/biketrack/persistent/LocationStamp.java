@@ -25,6 +25,7 @@ public class LocationStamp {
     private Tour tour;
 
     // TODO Add the altitude (use air pressure)
+    // TODO The E6 notation is outdated. Make it use normal "double" values and drop all old data...
 
     public LocationStamp(){}
 
