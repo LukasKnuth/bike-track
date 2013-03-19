@@ -1,3 +1,6 @@
 [submodule "libs/action_bar_sherlock"]
 	path = libs/action_bar_sherlock
 	url = https://github.com/JakeWharton/ActionBarSherlock.git
+[submodule "libs/nine_old_android"]
+	path = libs/nine_old_android
+	url = https://github.com/JakeWharton/NineOldAndroids.git

@@ -14,6 +14,9 @@ import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.animation.TranslateAnimation;
 import android.widget.*;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -145,11 +148,22 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
                                 // Make the date:
                                 Calendar calendar = Calendar.getInstance();
                                 calendar.set(date.getYear(), date.getMonth(), date.getDayOfMonth());
-                                Tour new_tour = new Tour(name.getText().toString(), calendar.getTime());
+                                final Tour new_tour = new Tour(name.getText().toString(), calendar.getTime());
                                 dao.create(new_tour);
-                                // Reload the tours:
-                                tour_adapter.insert(new_tour, 0);
+                                // Add the new tour to the list. Also, animate!
+                                Animation slide_down = new TranslateAnimation(0,0, 0, tour_list.getChildAt(0).getHeight());
+                                slide_down.setDuration(300);
+                                slide_down.setAnimationListener(new Animation.AnimationListener() {
+                                    @Override
+                                    public void onAnimationEnd(Animation animation) {
+                                        tour_adapter.insert(new_tour, 0); // TODO Not perfect yet... Without the "flicker"!
+                                    }
+
+                                    @Override public void onAnimationStart(Animation animation) {}
+                                    @Override public void onAnimationRepeat(Animation animation) {}
+                                });
                                 dialogInterface.dismiss();
+                                tour_list.startAnimation(slide_down);
                             } catch (SQLException e) {
                                 e.printStackTrace();
                             }
@@ -313,12 +327,35 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
                             Dao<LocationStamp, Void> stamp_dao = Main.this.getHelper()
                                     .getLocationStampDao();
                             // Recursive delete all LocationStamps of that tour.
-                            for (Tour tour : tours) {
+                            for (final Tour tour : tours) {
                                 // TODO Use the PDO here!
                                 int deleted2 = stamp_dao.executeRaw("DELETE FROM loc_stamp " +
                                         "WHERE tour_id = "+tour.getId());
                                 Log.v(LOG_TAG, "Deleted "+deleted2+" locationstamps from "+tour.getName());
-                                tour_adapter.remove(tour);
+                                // Remove and animate:
+                                final View animate_me = tour_list.getChildAt(tour_adapter.getPosition(tour));
+                                Animation animation = AnimationUtils.loadAnimation(Main.this, android.R.anim.slide_out_right); // TODO Make it slide out LEFT
+                                animation.setAnimationListener(new Animation.AnimationListener() {
+                                    @Override
+                                    public void onAnimationEnd(Animation animation) {
+                                        if (!animation.hasEnded()){
+                                            /*
+                                                This is a bug in the platform. The animation is done "on-Screen", but not
+                                                "really". So, cancel all animations on the view.
+                                                See http://stackoverflow.com/q/4750939/717341
+                                            */
+                                            //
+                                            animate_me.clearAnimation();
+                                        } else {
+                                            // The finished animation has been canceled and is no really done.
+                                            tour_adapter.remove(tour);
+                                        }
+                                    }
+
+                                    @Override public void onAnimationStart(Animation animation) {}
+                                    @Override public void onAnimationRepeat(Animation animation) {}
+                                });
+                                animate_me.startAnimation(animation);
                             }
                             if (deleted == tours.size()) {
                                 Toast.makeText(Main.this, "Successfully deleted " + deleted + " tours",
