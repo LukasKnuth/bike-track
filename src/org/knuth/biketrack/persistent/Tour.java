@@ -21,14 +21,14 @@ import java.util.Date;
 public class Tour implements Parcelable{
 
     // TODO Add mutable tour-length field and let user increase it.
-    // TODO Add statistics-field for average speed, etc to not recalculate every time.
+    // TODO Add statistics-fields for average speed, top-speed, track-length, etc (maybe new table??)
 
     @DatabaseField(generatedId = true)
     private int id;
     @DatabaseField
-    private String name;
+    private String name; // TODO Remove the name from tours.
     @DatabaseField
-    private Date date;
+    private Date date; // TODO Remove the data and use the one from the first location-stamp of this tour.
 
     public Tour(){}
 

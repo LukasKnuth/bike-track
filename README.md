@@ -23,7 +23,7 @@ If you ever pirated an application, you'll probably know how to do that ;)
 
 ### Build it
 
-At the moment, you'll need to have the *Android SDK*, *Platform 4.1* and the *Google APIs* for that platform, to successfully build the source yourself.
+At the moment, you'll need to have the *Android SDK*, *Platform 4.1* and the *Google Play Services* for that platform, to successfully build the source yourself.
 
 Also, you'll want to clone the git sub-modules before building the application.
 
@@ -42,9 +42,19 @@ If you encounter any **problems or bugs**, please also *open a ticket* on the [I
 ## ToDo
 
 * Add charts for all collected data (AchartEngine, JavaDoc for ChartFactory).
-* Add measuring altitude (see http://stackoverflow.com/questions/6141390)
 * Make the TrackerService bind-able and use the messages to get the GPS-state.
 * Change Font to Roboto (http://developer.android.com/design/style/typography.html)
 * Add Photo-taking capabilities (Tour pictures, with GEO-Tags, etc)
 * New Tour-Activity and Main-Activity Listview layout (with the images above and some data about the tour)
-* Also remove the need to give a name/date and find out the start-location (City) and the current date
+
+### Roadmap
+
+The roadmap for the next major change in the application-backend:
+
+1. Update database (see to-do items in the "persistent"-package)
+2. Change TrackingService to use the new database-layout
+3. Add measuring the altitude to TrackingService
+5. Update the TourActivity as the "start-point" for a new tour. (When Tracking is done, store tour date, find out the start/goal city-names, calculate the tour-data and store it all in the database).
+6. Use SharedPrefferences to allow changing between metric/foot units
+7. Add the Google Play Services license to the prefference-activity
+4. Update the Main Activity to no longer ask for name/date

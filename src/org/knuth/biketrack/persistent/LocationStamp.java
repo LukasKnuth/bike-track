@@ -20,7 +20,7 @@ public class LocationStamp {
     @DatabaseField
     private Date timestamp;
     @DatabaseField
-    private int speed;
+    private int speed; // TODO Store speed as the m/s float.
     @DatabaseField(foreign = true)
     private Tour tour;
 
