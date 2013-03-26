@@ -199,7 +199,7 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
                 // Set new start-location:
                 location1.set(location2);
             }
-            // TODO Allow using mp/h here...
+            // TODO Read setting from SharedPreferences and convert to km or miles here!
             total_distance = (double)Math.round((total_distance / 1000) * 100) / 100;
             // Create group and data:
             StatisticGroup track_group = new StatisticGroup("Track");
@@ -211,16 +211,17 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
          * Calculate average- and top-speed
          */
         private StatisticGroup getSpeedGroup(List<LocationStamp> stamps){
-            int top_speed = 0;
-            int all_speed = 0; // needed for average calculation.
+            float top_speed = 0;
+            float all_speed = 0; // needed for average calculation.
             for (LocationStamp s : stamps){
                 all_speed += s.getSpeed();
                 if (top_speed < s.getSpeed()) top_speed = s.getSpeed();
             }
-            int average_speed = all_speed / stamps.size();
+            float average_speed = all_speed / stamps.size();
+            // TODO Read setting from SharedPreferences and convert to km/h or mp/h here!
             StatisticGroup speed_group = new StatisticGroup("Speed");
-            speed_group.add(new Statistic<Integer>(top_speed, "Km/h", "Top Speed"));
-            speed_group.add(new Statistic<Integer>(average_speed, "Km/h", "Average Speed"));
+            speed_group.add(new Statistic<Integer>((int)top_speed, "m/s", "Top Speed"));
+            speed_group.add(new Statistic<Integer>((int)average_speed, "m/s", "Average Speed"));
             return speed_group;
         }
 

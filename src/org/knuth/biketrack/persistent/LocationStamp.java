@@ -22,13 +22,13 @@ public class LocationStamp {
     @DatabaseField
     private Date timestamp;
     @DatabaseField
-    private int speed; // TODO Store speed as the m/s float.
+    private float speed;
     @DatabaseField(foreign = true)
     private Tour tour;
 
     public LocationStamp(){}
 
-    public LocationStamp(double latitude, double longitude, double altitude, Date timestamp, int speed, Tour tour){
+    public LocationStamp(double latitude, double longitude, double altitude, Date timestamp, float speed, Tour tour){
         this.latitude = latitude;
         this.longitude = longitude;
         this.altitude = altitude;
@@ -53,7 +53,7 @@ public class LocationStamp {
         return timestamp;
     }
 
-    public int getSpeed() {
+    public float getSpeed() {
         return speed;
     }
 

@@ -59,8 +59,7 @@ public class TrackingService extends OrmLiteBaseService<DatabaseHelper> {
                     data = new LocationStamp(
                             location.getLatitude(), location.getLongitude(), location.getAltitude(),
                             new Date(),
-                            (int)(location.getSpeed() * 3.6), // Calculate Km/h
-                            // TODO Store the M/s value and allow localisation in app-settings (either Km/h or MPh)
+                            location.getSpeed(),
                             current_tour);
                     location_dao.create(data);
                 } catch (SQLException e) {
