@@ -35,9 +35,9 @@ public class DatabaseActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         table = new TableLayout(this);
         TableRow headlines = new TableRow(this);
-        headlines.addView( makeHeadline("Date") );
         headlines.addView( makeHeadline("Latitude"));
         headlines.addView( makeHeadline("Longitude"));
+        headlines.addView( makeHeadline("Altitude") );
         headlines.addView( makeHeadline("Speed (km/h)"));
         table.addView(headlines);
         table.setStretchAllColumns(true);
@@ -92,9 +92,9 @@ public class DatabaseActivity extends BaseActivity {
                 List<LocationStamp> stamps = builder.query();
                 for (LocationStamp stamp : stamps){
                     TableRow row = new TableRow(DatabaseActivity.this);
-                    row.addView( makeTextView(stamp.getTimestamp().toLocaleString()) );
                     row.addView( makeTextView(String.valueOf(stamp.getLatitude())) );
                     row.addView( makeTextView(String.valueOf(stamp.getLongitude())) );
+                    row.addView( makeTextView(String.valueOf(stamp.getAltitude())) );
                     row.addView( makeTextView(String.valueOf(stamp.getSpeed())) );
                     publishProgress(row);
                     // Check if cancelled.

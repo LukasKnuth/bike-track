@@ -52,11 +52,12 @@ public class TrackingService extends OrmLiteBaseService<DatabaseHelper> {
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
+                // TODO Need to handle situations where no speed/altitude is available from GPS receiver!
                 LocationStamp data = null;
                 try {
                     Dao<LocationStamp, Void> location_dao = getHelper().getLocationStampDao();
                     data = new LocationStamp(
-                            location.getLatitude(), location.getLongitude(),
+                            location.getLatitude(), location.getLongitude(), location.getAltitude(),
                             new Date(),
                             (int)(location.getSpeed() * 3.6), // Calculate Km/h
                             // TODO Store the M/s value and allow localisation in app-settings (either Km/h or MPh)
