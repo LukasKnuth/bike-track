@@ -179,7 +179,7 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
          * Calculate the length of the track
          */
         private StatisticGroup getTrackGroup(List<LocationStamp> stamps){
-            // TODO Migrate this to not use E6 anymore. Also, new way (V2) available?
+            // TODO New way (V2) available?
             double total_distance = 0;
             Location location1 = null;
             Location location2 = new Location("pointB");
@@ -187,18 +187,19 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             for (LocationStamp s : stamps){
                 if (location1 == null){
                     location1 = new Location("pointA");
-                    location1.setLatitude(s.getLatitudeE6() / 1E6);
-                    location1.setLongitude(s.getLongitudeE6() / 1E6);
+                    location1.setLatitude(s.getLatitude());
+                    location1.setLongitude(s.getLongitude());
                     continue;
                 }
                 // Set new goal-LatLon
-                location2.setLatitude(s.getLatitudeE6() / 1E6);
-                location2.setLongitude(s.getLongitudeE6() / 1E6);
+                location2.setLatitude(s.getLatitude());
+                location2.setLongitude(s.getLongitude());
                 // Calculate distance:
                 total_distance += location1.distanceTo(location2);
                 // Set new start-location:
                 location1.set(location2);
             }
+            // TODO Allow using mp/h here...
             total_distance = (double)Math.round((total_distance / 1000) * 100) / 100;
             // Create group and data:
             StatisticGroup track_group = new StatisticGroup("Track");

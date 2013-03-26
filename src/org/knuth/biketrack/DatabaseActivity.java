@@ -93,9 +93,9 @@ public class DatabaseActivity extends BaseActivity {
                 for (LocationStamp stamp : stamps){
                     TableRow row = new TableRow(DatabaseActivity.this);
                     row.addView( makeTextView(stamp.getTimestamp().toLocaleString()) );
-                    row.addView( makeTextView(stamp.getLatitudeE6()+"") );
-                    row.addView( makeTextView(stamp.getLongitudeE6()+"") );
-                    row.addView( makeTextView(stamp.getSpeed()+"") );
+                    row.addView( makeTextView(String.valueOf(stamp.getLatitude())) );
+                    row.addView( makeTextView(String.valueOf(stamp.getLongitude())) );
+                    row.addView( makeTextView(String.valueOf(stamp.getSpeed())) );
                     publishProgress(row);
                     // Check if cancelled.
                     if (isCancelled()) break;

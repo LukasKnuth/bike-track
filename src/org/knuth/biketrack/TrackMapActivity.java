@@ -104,10 +104,10 @@ public class TrackMapActivity extends FragmentActivity {
                 if (stamps.size() == 0) return null;
                 // Push the LatLng objects:
                 for (LocationStamp stamp : stamps){
-                    LatLng location = new LatLng(stamp.getLatitudeE6()/1e6, stamp.getLongitudeE6()/1e6); // TODO E6 Compatibility. Take out!
+                    LatLng location = new LatLng(stamp.getLatitude(), stamp.getLongitude());
                     this.publishProgress(location);
                 }
-                return new LatLng(stamps.get(0).getLatitudeE6()/1e6, stamps.get(0).getLongitudeE6()/1e6); // TODO Same as ^
+                return new LatLng(stamps.get(0).getLatitude(), stamps.get(0).getLongitude());
             } catch (SQLException e) {
                 e.printStackTrace();
             }

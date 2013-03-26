@@ -56,8 +56,7 @@ public class TrackingService extends OrmLiteBaseService<DatabaseHelper> {
                 try {
                     Dao<LocationStamp, Void> location_dao = getHelper().getLocationStampDao();
                     data = new LocationStamp(
-                            (int)(location.getLatitude() * 1E6), // Use the E6-format.
-                            (int)(location.getLongitude() * 1E6), // TODO We don't need this E6 anymore... PUT IT OUT!
+                            location.getLatitude(), location.getLongitude(),
                             new Date(),
                             (int)(location.getSpeed() * 3.6), // Calculate Km/h
                             // TODO Store the M/s value and allow localisation in app-settings (either Km/h or MPh)

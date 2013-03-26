@@ -14,9 +14,9 @@ import java.util.Date;
 public class LocationStamp {
 
     @DatabaseField
-    private int latitudeE6;
+    private double latitude;
     @DatabaseField
-    private int longitudeE6;
+    private double longitude;
     @DatabaseField
     private Date timestamp;
     @DatabaseField
@@ -24,33 +24,22 @@ public class LocationStamp {
     @DatabaseField(foreign = true)
     private Tour tour;
 
-    // TODO Add the altitude (use air pressure)
-    // TODO The E6 notation is outdated. Make it use normal "double" values and drop all old data...
-
     public LocationStamp(){}
 
-    public LocationStamp(int latitudeE6, int longitudeE6, Date timestamp, int speed, Tour tour){
-        this.latitudeE6 = latitudeE6;
-        this.longitudeE6 = longitudeE6;
+    public LocationStamp(double latitude, double longitude, Date timestamp, int speed, Tour tour){
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.timestamp = timestamp;
         this.speed = speed;
         this.tour = tour;
     }
 
-    /**
-     * Get the latitude in the E6-format.
-     * @see <a href="http://stackoverflow.com/questions/7049966">SO</a>
-     */
-    public int getLatitudeE6() {
-        return latitudeE6;
+    public double getLatitude() {
+        return latitude;
     }
 
-    /**
-     * Get the latitude in the E6-format.
-     * @see <a href="http://stackoverflow.com/questions/7049966">SO</a>
-     */
-    public int getLongitudeE6() {
-        return longitudeE6;
+    public double getLongitude() {
+        return longitude;
     }
 
     public Date getTimestamp() {
