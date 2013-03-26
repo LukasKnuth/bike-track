@@ -151,19 +151,24 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
                                 final Tour new_tour = new Tour(name.getText().toString(), calendar.getTime());
                                 dao.create(new_tour);
                                 // Add the new tour to the list. Also, animate!
-                                Animation slide_down = new TranslateAnimation(0,0, 0, tour_list.getChildAt(0).getHeight());
-                                slide_down.setDuration(300);
-                                slide_down.setAnimationListener(new Animation.AnimationListener() {
-                                    @Override
-                                    public void onAnimationEnd(Animation animation) {
-                                        tour_adapter.insert(new_tour, 0); // TODO Not perfect yet... Without the "flicker"!
-                                    }
+                                View offset = tour_list.getChildAt(0);
+                                if (offset != null){
+                                    Animation slide_down = new TranslateAnimation(0,0, 0, offset.getHeight());
+                                    slide_down.setDuration(300);
+                                    slide_down.setAnimationListener(new Animation.AnimationListener() {
+                                        @Override
+                                        public void onAnimationEnd(Animation animation) {
+                                            tour_adapter.insert(new_tour, 0); // TODO Not perfect yet... Without the "flicker"!
+                                        }
 
-                                    @Override public void onAnimationStart(Animation animation) {}
-                                    @Override public void onAnimationRepeat(Animation animation) {}
-                                });
-                                dialogInterface.dismiss();
-                                tour_list.startAnimation(slide_down);
+                                        @Override public void onAnimationStart(Animation animation) {}
+                                        @Override public void onAnimationRepeat(Animation animation) {}
+                                    });
+                                    dialogInterface.dismiss();
+                                    tour_list.startAnimation(slide_down);
+                                } else {
+                                    tour_adapter.insert(new_tour, 0);
+                                }
                             } catch (SQLException e) {
                                 e.printStackTrace();
                             }
@@ -349,6 +354,7 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
                                         } else {
                                             // The finished animation has been canceled and is no really done.
                                             tour_adapter.remove(tour);
+                                            tour_list.getEmptyView().setVisibility(View.GONE);
                                         }
                                     }
 
