@@ -22,31 +22,21 @@ public class Tour implements Parcelable{
 
     // TODO Add mutable tour-length field and let user increase it.
     // TODO Add statistics-fields for average speed, top-speed, track-length, etc (maybe new table??)
+    // TODO Instead of name, do lookup: https://developers.google.com/maps/documentation/geocoding/#ReverseGeocoding
 
     @DatabaseField(generatedId = true)
     private int id;
     @DatabaseField
-    private String name; // TODO Remove the name from tours.
-    @DatabaseField
-    private Date date; // TODO Remove the data and use the one from the first location-stamp of this tour.
+    private Date date;
 
     public Tour(){}
 
-    public Tour(String name, Date date){
-        this.name = name;
+    public Tour(Date date){
         this.date = date;
     }
 
     public int getId() {
         return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name){
-        this.name = name;
     }
 
     public Date getDate() {
@@ -55,7 +45,12 @@ public class Tour implements Parcelable{
 
     @Override
     public String toString(){
-        return name+" - "+date.toLocaleString();
+        /*
+            When changing this implementation, check usages.
+            It is used in many places that can't handle line-breaks. Most of those
+            can be removed anyways...
+        */
+        return "Tour #"+id;
     }
 
     /*
@@ -82,7 +77,6 @@ public class Tour implements Parcelable{
     @Override
     public void writeToParcel(Parcel parcel, int flags) {
         parcel.writeInt(id);
-        parcel.writeString(name);
         parcel.writeLong(date.getTime());
     }
 
@@ -91,7 +85,6 @@ public class Tour implements Parcelable{
      */
     private Tour(Parcel parcel){
         this.id = parcel.readInt();
-        this.name = parcel.readString();
         this.date = new Date(parcel.readLong());
     }
 }

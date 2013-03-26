@@ -140,6 +140,7 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
                 setPositiveButton("Done", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
+                        // TODO Give NO tour-object to TourActivity and handle creation there!
                         DatePicker date = (DatePicker)layout.findViewById(R.id.tour_date);
                         EditText name = (EditText)layout.findViewById(R.id.tour_name);
                         if (name.getText().toString().length() > 0){
@@ -148,7 +149,7 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
                                 // Make the date:
                                 Calendar calendar = Calendar.getInstance();
                                 calendar.set(date.getYear(), date.getMonth(), date.getDayOfMonth());
-                                final Tour new_tour = new Tour(name.getText().toString(), calendar.getTime());
+                                final Tour new_tour = new Tour(calendar.getTime());
                                 dao.create(new_tour);
                                 // Add the new tour to the list. Also, animate!
                                 View offset = tour_list.getChildAt(0);
@@ -336,7 +337,7 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
                                 // TODO Use the PDO here!
                                 int deleted2 = stamp_dao.executeRaw("DELETE FROM loc_stamp " +
                                         "WHERE tour_id = "+tour.getId());
-                                Log.v(LOG_TAG, "Deleted "+deleted2+" locationstamps from "+tour.getName());
+                                Log.v(LOG_TAG, "Deleted "+deleted2+" locationstamps from "+tour.toString());
                                 // Remove and animate:
                                 final View animate_me = tour_list.getChildAt(tour_adapter.getPosition(tour));
                                 Animation animation = AnimationUtils.loadAnimation(Main.this, android.R.anim.slide_out_right); // TODO Make it slide out LEFT
@@ -382,7 +383,7 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
                     tours.size() + " selected tours?");
         } else {
             builder.setMessage("Are you sure that you want to delete '" +
-                     tours.get(0).getName()+"' ?");
+                     tours.get(0).toString()+"' ?");
         }
         builder.create().show();
     }
@@ -392,37 +393,7 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
      * @param tour the tour to rename.
      */
     private void showRenameDialog(final Tour tour){
-        AlertDialog.Builder builder;
-
-        LayoutInflater inflater = (LayoutInflater)Main.this.getSystemService(LAYOUT_INFLATER_SERVICE);
-        View layout = inflater.inflate(R.layout.rename_tour_dialog,
-                (ViewGroup) findViewById(R.id.rename_dialog_root));
-
-        final EditText renamed_tour = (EditText)layout.findViewById(R.id.new_tour_name);
-
-        renamed_tour.setText(tour.getName());
-
-        builder = new AlertDialog.Builder(Main.this);
-        builder.setView(layout).setCancelable(true)
-                .setPositiveButton("Save", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        if (renamed_tour.getText().toString().length() < 1){
-                            Toast.makeText(Main.this, "Enter a text...",
-                                    Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-                        tour.setName(renamed_tour.getText().toString());
-                        try {
-                            Main.this.getHelper().getTourDao().update(tour);
-                            // Reload everything:
-                            tour_adapter.notifyDataSetChanged();
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-        builder.create().show();
+        // TODO Empty stub, this will be gone, soon...
     }
 
 }

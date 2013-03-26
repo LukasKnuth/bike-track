@@ -53,7 +53,7 @@ The roadmap for the next major change in the application-backend:
 
 1. Update database (see to-do items in the "persistent"-package)
 2. Change TrackingService to use the new database-layout
-4. Update the TourActivity as the "start-point" for a new tour. (When Tracking is done, store tour date, find out the start/goal city-names, calculate the tour-data and store it all in the database).
-5. Use SharedPrefferences to allow changing between metric/foot units
-6. Add the Google Play Services license to the prefference-activity
-7. Update the Main Activity to no longer ask for name/date
+3. Use SharedPrefferences to allow changing between metric/foot units
+4. Add the Google Play Services license to the prefference-activity
+5. Update the TourActivity as the "start-point" for a new tour. (When Tracking is started: store tour date. When finished, find out the start/goal city-names, calculate the tour-data and store it all in the database).
+6. Update the Main Activity to no longer ask for name/date (also remove the "rename"-option)

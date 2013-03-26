@@ -51,7 +51,7 @@ public class DatabaseActivity extends BaseActivity {
         } else {
             Log.e(Main.LOG_TAG, "No tour was supplied to DatabaseActivity!");
         }
-        this.setTitle("Location Stamps for '"+current_tour.getName()+"'");
+        this.setTitle("Location Stamps for '"+current_tour.toString()+"'");
         // Show the data:
         progress = new ProgressDialog(this);
         progress.setIndeterminate(true);

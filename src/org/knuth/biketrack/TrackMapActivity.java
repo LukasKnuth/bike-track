@@ -63,7 +63,7 @@ public class TrackMapActivity extends FragmentActivity {
         } else {
             Log.e(Main.LOG_TAG, "No tour was supplied to TrackMapActivity!");
         }
-        this.setTitle("Map for '"+current_tour.getName()+"'");
+        this.setTitle("Map for '"+current_tour.toString()+"'");
 
         // Load data from Database and display the Track:
         progress = new ProgressDialog(this);

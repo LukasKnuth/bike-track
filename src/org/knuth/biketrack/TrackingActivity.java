@@ -75,7 +75,7 @@ public class TrackingActivity extends BaseActivity {
             TrackingBinder binder = (TrackingBinder) iBinder;
             binder.requestUpdates(callback);
             // Get the current tours information:
-            String tour_name = binder.getTrackedTour().getName();
+            String tour_name = binder.getTrackedTour().toString();
             ((TextView) findViewById(R.id.tracking_tour_name)).setText(tour_name);
         }
 
