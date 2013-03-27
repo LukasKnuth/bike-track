@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="@string/prefs.label.general">
+        <ListPreference android:key="@string/prefs.key.system_of_measurement"
+                        android:title="@string/prefs.label.measure_system_title"
+                        android:summary="@string/prefs.label.measure_system_desc"
+                        android:defaultValue="@string/prefs.value.measure_system_metric"
+                        android:entries="@array/prefs_label_measure_system"
+                        android:entryValues="@array/prefs_value_measure_system"
+        />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/prefs.label.about_legal">
+        <Preference android:key="@string/prefs.key.show_opensource_license"
+                    android:title="@string/prefs.label.opensource_license"
+                    />
+    </PreferenceCategory>
+
+</PreferenceScreen>

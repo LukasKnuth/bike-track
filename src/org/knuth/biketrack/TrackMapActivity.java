@@ -39,7 +39,6 @@ public class TrackMapActivity extends FragmentActivity {
     private Tour current_tour;
 
     // TODO Don't reload on Orientation-change
-    // TODO Include the Google Play services license (point in preferences?). See https://developers.google.com/maps/documentation/android/intro
 
     @Override
     public void onCreate(Bundle saved){

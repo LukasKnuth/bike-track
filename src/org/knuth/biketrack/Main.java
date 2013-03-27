@@ -214,7 +214,7 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
     }
 
     /**
-     * <p>This method should only be called on pre Honeycomb decices.</p>
+     * <p>This method should only be called on pre Honeycomb devices.</p>
      * <p>It will use the original ActionBar API to create a context-menu with it.</p>
      */
     @TargetApi(11)
@@ -315,6 +315,17 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
                 return true;
             }
         });
+        menu.add(R.string.main_menu_settings).
+                setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW).
+                setIcon(android.R.drawable.ic_menu_preferences).
+                setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener(){
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        Intent i = new Intent(Main.this, SettingsActivity.class);
+                        Main.this.startActivity(i);
+                        return true;
+                    }
+                });
         return true;
     }
 

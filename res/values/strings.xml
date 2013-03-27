@@ -9,4 +9,27 @@
     <string name="tourActivtiy.menu.trackingActivity">Show live info</string>
     <string name="main.contextmenu.delete">Delete</string>
     <string name="main.contextmenu.rename">Rename</string>
+    <string name="main.menu.settings">Settings</string>
+
+    <!-- Settings values - convention: prefs.[Label/Value/Key].[Name] -->
+    <string name="prefs.key.show_opensource_license">show_opensource_license</string>
+    <string name="prefs.key.system_of_measurement">system_of_measurement</string>
+
+    <string name="prefs.label.general">General Settings</string>
+    <string name="prefs.label.about_legal">About and Legal</string>
+    <string name="prefs.label.measure_system_title">Distance Unit</string>
+    <string name="prefs.label.measure_system_desc">The Unit for distances used by the App.</string>
+    <array name="prefs_label_measure_system">
+        <item>Metric</item>
+        <item>Imperial</item>
+    </array>
+    <string name="prefs.label.opensource_license">Show OpenSource Software License</string>
+
+    <string name="prefs.value.measure_system_metric">metric</string>
+    <string name="prefs.value.measure_system_imperial">imperial</string>
+    <array name="prefs_value_measure_system">
+        <item>@string/prefs.value.measure_system_metric</item>
+        <item>@string/prefs.value.measure_system_imperial</item>
+    </array>
+
 </resources>
