@@ -1,15 +1,18 @@
 #
-# generated on 2012/07/12 01:23:28
+# generated on 2013/03/27 06:02:42
 #
 # --table-start--
 dataClass=org.knuth.biketrack.persistent.LocationStamp
 tableName=loc_stamp
 # --table-fields-start--
 # --field-start--
-fieldName=latitudeE6
+fieldName=latitude
 # --field-end--
 # --field-start--
-fieldName=longitudeE6
+fieldName=longitude
+# --field-end--
+# --field-start--
+fieldName=altitude
 # --field-end--
 # --field-start--
 fieldName=timestamp
@@ -33,10 +36,16 @@ fieldName=id
 generatedId=true
 # --field-end--
 # --field-start--
-fieldName=name
+fieldName=date
 # --field-end--
 # --field-start--
-fieldName=date
+fieldName=first_location
+# --field-end--
+# --field-start--
+fieldName=second_location
+# --field-end--
+# --field-start--
+fieldName=tour_type
 # --field-end--
 # --table-fields-end--
 # --table-end--

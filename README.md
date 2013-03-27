@@ -42,6 +42,7 @@ If you encounter any **problems or bugs**, please also *open a ticket* on the [I
 ## ToDo
 
 * Add charts for all collected data (AchartEngine, JavaDoc for ChartFactory).
+* Cache the calculated statistics in a new DB-table.
 * Make the TrackerService bind-able and use the messages to get the GPS-state.
 * Change Font to Roboto (http://developer.android.com/design/style/typography.html)
 * Add Photo-taking capabilities (Tour pictures, with GEO-Tags, etc)
@@ -51,8 +52,6 @@ If you encounter any **problems or bugs**, please also *open a ticket* on the [I
 
 The roadmap for the next major change in the application-backend:
 
-1. Update database (see to-do items in the "persistent"-package)
-2. Change TrackingService to use the new database-layout
 3. Use SharedPrefferences to allow changing between metric/foot units
 4. Add the Google Play Services license to the prefference-activity
 5. Update the TourActivity as the "start-point" for a new tour. (When Tracking is started: store tour date. When finished, find out the start/goal city-names (https://developers.google.com/maps/documentation/geocoding/#ReverseGeocoding), calculate the tour-data and store it all in the database).

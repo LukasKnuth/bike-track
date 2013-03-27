@@ -21,7 +21,7 @@ import java.sql.SQLException;
 public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
     private final static String DB_NAME = "bike_track.db";
-    private final static int DB_VERSION = 5;
+    private final static int DB_VERSION = 6;
 
     private Dao<LocationStamp, Void> location_dao;
     private Dao<Tour, Integer> tour_dao;
@@ -67,8 +67,13 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, ConnectionSource conSource, int i, int i1) {
-        db.execSQL("DROP TABLE loc_stamp");
-        onCreate(db, conSource);
+        try {
+            TableUtils.dropTable(conSource, LocationStamp.class, true);
+            TableUtils.dropTable(conSource, Tour.class, true);
+            onCreate(db, conSource);
+        } catch (SQLException e){
+            throw new RuntimeException(e);
+        }
         Log.v(Main.LOG_TAG, "Recreated the DB");
     }
 }
