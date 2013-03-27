@@ -17,8 +17,8 @@
 
     <string name="prefs.label.general">General Settings</string>
     <string name="prefs.label.about_legal">About and Legal</string>
-    <string name="prefs.label.measure_system_title">Distance Unit</string>
-    <string name="prefs.label.measure_system_desc">The Unit for distances used by the App.</string>
+    <string name="prefs.label.measure_system_title">System of Measurement</string>
+    <string name="prefs.label.measure_system_desc">The system in which distances should be measured.</string>
     <array name="prefs_label_measure_system">
         <item>Metric</item>
         <item>Imperial</item>
