@@ -47,12 +47,11 @@ If you encounter any **problems or bugs**, please also *open a ticket* on the [I
 * Change Font to Roboto (http://developer.android.com/design/style/typography.html)
 * Add Photo-taking capabilities (Tour pictures, with GEO-Tags, etc)
 * New Tour-Activity and Main-Activity Listview layout (with the images above and some data about the tour)
+* On first application-launch, check the device-locale and guess measure-system
 
 ### Roadmap
 
 The roadmap for the next major change in the application-backend:
 
-3. Use SharedPrefferences to allow changing between metric/foot units
-4. Add the Google Play Services license to the prefference-activity
 5. Update the TourActivity as the "start-point" for a new tour. (When Tracking is started: store tour date. When finished, find out the start/goal city-names (https://developers.google.com/maps/documentation/geocoding/#ReverseGeocoding), calculate the tour-data and store it all in the database).
 6. Update the Main Activity to no longer ask for name/date (also remove the "rename"-option)

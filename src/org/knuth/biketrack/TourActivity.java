@@ -6,9 +6,11 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -47,6 +49,11 @@ import java.util.List;
  * @version 1.0
  */
 public class TourActivity extends BaseActivity implements LoaderManager.LoaderCallbacks<ExpandableStatisticAdapter>{
+
+    private static final double METER_TO_MILE = 0.000621371192;
+    private static final float MS_TO_MPH = 2.23693629f;
+    private static final double METER_TO_KILOMETER = 0.001;
+    private static final float MS_TO_KMH = 3.6f;
 
     /** The tour which is currently shown on this Activity */
     private Tour current_tour;
@@ -199,12 +206,28 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
                 // Set new start-location:
                 location1.set(location2);
             }
-            // TODO Read setting from SharedPreferences and convert to km or miles here!
-            total_distance = (double)Math.round((total_distance / 1000) * 100) / 100;
-            // Create group and data:
+            // Calculate the distance depending on the set system:
             StatisticGroup track_group = new StatisticGroup("Track");
-            track_group.add(new Statistic<Double>(total_distance, "Km", "Total distance"));
+            if (isMetric()){
+                total_distance = (double)Math.round(total_distance * METER_TO_KILOMETER) / 100;
+                track_group.add(new Statistic<Double>(total_distance, "Km", "Total distance"));
+            } else {
+                total_distance = (double)Math.round(total_distance * METER_TO_MILE) / 100;
+                track_group.add(new Statistic<Double>(total_distance, "mi", "Total distance"));
+            }
             return track_group;
+        }
+
+        /**
+         * Checks whether the app is set to use the metric system or not.
+         * @return {@code true} if the metric system is used, {@code false} otherwise.
+         */
+        private boolean isMetric(){
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+            return prefs.getString(
+                    context.getString(R.string.prefs_key_system_of_measurement),
+                    context.getString(R.string.prefs_value_measure_system_metric)
+                   ).equals(context.getString(R.string.prefs_value_measure_system_metric));
         }
 
         /**
@@ -218,10 +241,19 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
                 if (top_speed < s.getSpeed()) top_speed = s.getSpeed();
             }
             float average_speed = all_speed / stamps.size();
-            // TODO Read setting from SharedPreferences and convert to km/h or mp/h here!
+            // Calculate the statistics:
             StatisticGroup speed_group = new StatisticGroup("Speed");
-            speed_group.add(new Statistic<Integer>((int)top_speed, "m/s", "Top Speed"));
-            speed_group.add(new Statistic<Integer>((int)average_speed, "m/s", "Average Speed"));
+            if (isMetric()){
+                top_speed = (top_speed / MS_TO_KMH);
+                average_speed = (average_speed / MS_TO_KMH);
+                speed_group.add(new Statistic<Integer>((int)top_speed, "Km/h", "Top Speed"));
+                speed_group.add(new Statistic<Integer>((int)average_speed, "Km/h", "Average Speed"));
+            } else {
+                top_speed = (top_speed / MS_TO_MPH);
+                average_speed = (average_speed / MS_TO_MPH);
+                speed_group.add(new Statistic<Integer>((int)top_speed, "mph", "Top Speed"));
+                speed_group.add(new Statistic<Integer>((int)average_speed, "mph", "Average Speed"));
+            }
             return speed_group;
         }
 
@@ -338,7 +370,7 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
         /*
             NOT inflating menu currently.
             See https://github.com/JakeWharton/ActionBarSherlock/issues/562
-        */
+        */ // TODO Remove the inflater code and the menu XML!
         //this.getSupportMenuInflater().inflate(R.menu.tour_menu, menu);
         menu.add(R.string.tourActivity_menu_showRecords)
             .setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_IF_ROOM|MenuItem.SHOW_AS_ACTION_WITH_TEXT)
