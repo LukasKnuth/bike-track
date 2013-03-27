@@ -20,14 +20,23 @@ import java.util.Date;
 @DatabaseTable(tableName = "tours")
 public class Tour implements Parcelable{
 
-    // TODO Add mutable tour-length field and let user increase it.
     // TODO Add statistics-fields for average speed, top-speed, track-length, etc (maybe new table??)
-    // TODO Instead of name, do lookup: https://developers.google.com/maps/documentation/geocoding/#ReverseGeocoding
 
     @DatabaseField(generatedId = true)
     private int id;
     @DatabaseField
     private Date date;
+    @DatabaseField
+    private String first_location;
+    @DatabaseField
+    private String second_location;
+    @DatabaseField
+    private int tour_type;
+
+    /** A tour, that goes from point A to point B */
+    public static final int TOUR_TYPE_PATH = 0;
+    /** A tour, that goes from point A back to point A */
+    public static final int TOUR_TYPE_CIRCLE = 1;
 
     public Tour(){}
 
@@ -41,6 +50,44 @@ public class Tour implements Parcelable{
 
     public Date getDate() {
         return date;
+    }
+
+    /**
+     * <p>Returns the name of the location where the first
+     *  {@code LocationStamp} was taken.</p>
+     * <p>This will normally be the City/Village name of where the tour was started.</p>
+     * @return a string-representation of the first-location.
+     */
+    public String getFirstLocation(){
+        return first_location;
+    }
+
+    /**
+     * <p>Returns the name of <i>a</i> second location in the tour.</p>
+     * <p>If the tour was of {@code TOUR_TYPE_PATH}, this will be the location where
+     *  the last {@code LocationStamp} was taken.</p>
+     * <p>Otherwise, in case it is a {@code TOUR_TYPE_CIRCLE}, another location
+     *  <b>along</b> the track will be chosen.</p>
+     * @return the string-representation of a first-location.
+     */
+    public String getSecondLocation(){
+        return second_location;
+    }
+
+    public int getTourType(){
+        return tour_type;
+    }
+
+    public void setFirstLocation(String first_location){
+        this.first_location = first_location;
+    }
+
+    public void setSecondLocation(String second_location){
+        this.second_location = second_location;
+    }
+
+    public void setTourType(int type){
+        this.tour_type = type;
     }
 
     @Override
@@ -78,6 +125,9 @@ public class Tour implements Parcelable{
     public void writeToParcel(Parcel parcel, int flags) {
         parcel.writeInt(id);
         parcel.writeLong(date.getTime());
+        parcel.writeString(first_location);
+        parcel.writeString(second_location);
+        parcel.writeInt(tour_type);
     }
 
     /**
@@ -86,5 +136,8 @@ public class Tour implements Parcelable{
     private Tour(Parcel parcel){
         this.id = parcel.readInt();
         this.date = new Date(parcel.readLong());
+        this.first_location = parcel.readString();
+        this.second_location = parcel.readString();
+        this.tour_type = parcel.readInt();
     }
 }
