@@ -35,6 +35,7 @@ import org.knuth.biketrack.persistent.Tour;
 import org.knuth.biketrack.service.TrackingService;
 
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -215,12 +216,13 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             }
             // Calculate the distance depending on the set system:
             StatisticGroup track_group = new StatisticGroup("Track");
+            DecimalFormat formater = new DecimalFormat("#.##");
             if (isMetric()){
-                total_distance = (double)Math.round(total_distance * METER_TO_KILOMETER) / 100;
-                track_group.add(new Statistic<Double>(total_distance, "Km", "Total distance"));
+                total_distance = total_distance * METER_TO_KILOMETER;
+                track_group.add(new Statistic<String>(formater.format(total_distance), "Km", "Total distance"));
             } else {
-                total_distance = (double)Math.round(total_distance * METER_TO_MILE) / 100;
-                track_group.add(new Statistic<Double>(total_distance, "mi", "Total distance"));
+                total_distance = total_distance * METER_TO_MILE;
+                track_group.add(new Statistic<String>(formater.format(total_distance), "mi", "Total distance"));
             }
             return track_group;
         }
@@ -251,13 +253,13 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             // Calculate the statistics:
             StatisticGroup speed_group = new StatisticGroup("Speed");
             if (isMetric()){
-                top_speed = (top_speed / MS_TO_KMH);
-                average_speed = (average_speed / MS_TO_KMH);
+                top_speed = (top_speed * MS_TO_KMH);
+                average_speed = (average_speed * MS_TO_KMH);
                 speed_group.add(new Statistic<Integer>((int)top_speed, "Km/h", "Top Speed"));
                 speed_group.add(new Statistic<Integer>((int)average_speed, "Km/h", "Average Speed"));
             } else {
-                top_speed = (top_speed / MS_TO_MPH);
-                average_speed = (average_speed / MS_TO_MPH);
+                top_speed = (top_speed * MS_TO_MPH);
+                average_speed = (average_speed * MS_TO_MPH);
                 speed_group.add(new Statistic<Integer>((int)top_speed, "mph", "Top Speed"));
                 speed_group.add(new Statistic<Integer>((int)average_speed, "mph", "Average Speed"));
             }
