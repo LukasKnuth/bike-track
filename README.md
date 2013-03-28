@@ -48,9 +48,3 @@ If you encounter any **problems or bugs**, please also *open a ticket* on the [I
 * Add Photo-taking capabilities (Tour pictures, with GEO-Tags, etc)
 * New Tour-Activity and Main-Activity Listview layout (with the images above and some data about the tour)
 * On first application-launch, check the device-locale and guess measure-system
-
-### Roadmap
-
-The roadmap for the next major change in the application-backend:
-
-5. Update the TourActivity as the "start-point" for a new tour. (When Tracking is started: store tour date. When finished, find out the start/goal city-names (https://developers.google.com/maps/documentation/geocoding/#ReverseGeocoding), calculate the tour-data and store it all in the database).

@@ -20,6 +20,8 @@ import java.util.Date;
 @DatabaseTable(tableName = "tours")
 public class Tour implements Parcelable{
 
+    public static final Tour UNSTORED_TOUR = new Tour();
+
     // TODO Add statistics-fields for average speed, top-speed, track-length, etc (maybe new table??)
 
     @DatabaseField(generatedId = true)

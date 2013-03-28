@@ -50,6 +50,9 @@ import java.util.List;
  */
 public class TourActivity extends BaseActivity implements LoaderManager.LoaderCallbacks<ExpandableStatisticAdapter>{
 
+    // TODO Cache the tour-statistics in the Database.
+    // TODO When we gain Internet access, check which (if any) tours need reverse-geocoding and do so...
+
     private static final double METER_TO_MILE = 0.000621371192;
     private static final float MS_TO_MPH = 2.23693629f;
     private static final double METER_TO_KILOMETER = 0.001;
@@ -62,6 +65,8 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
     private Button start_stop;
     /** ActionBar item, only shown when tracking to get back to {@code TrackingActivity} */
     private MenuItem live_view;
+    private MenuItem map_menu_item;
+    private MenuItem stats_menu_item;
 
     @Override
     public void onCreate(Bundle saved){
@@ -72,11 +77,12 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
         Bundle extras = this.getIntent().getExtras();
         if (extras != null && extras.containsKey(TrackingService.TOUR_KEY)){
             current_tour = extras.getParcelable(TrackingService.TOUR_KEY);
+            this.setTitle(current_tour.toString());
         } else {
-            Log.e(Main.LOG_TAG, "No tour was supplied to TourActivity!");
-            this.finish();
+            current_tour = Tour.UNSTORED_TOUR;
+            Log.e(Main.LOG_TAG, "No tour was supplied, so I created one.");
+            this.setTitle("New Tour");
         }
-        this.setTitle(current_tour.toString());
         // Set the buttons text:
         start_stop = (Button)this.findViewById(R.id.start_stop_tracking);
         if (isTrackingServiceRunning(this)){
@@ -90,11 +96,10 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
                 if (isTrackingServiceRunning(TourActivity.this)){
                     if (stopTracking()) start_stop.setText("Start tracking my position!");
                 } else {
-                    if (startTracking(current_tour)) start_stop.setText("Stop tracking");
+                    if (startTracking()) start_stop.setText("Stop tracking");
                 }
             }
         });
-        Log.v(Main.LOG_TAG, "Current tour has id of "+current_tour.getId());
         // Enable going back from the ActionBar:
         this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         // Set the empty-view for the list:
@@ -137,13 +142,13 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
     private static class StatisticLoader extends AsyncTaskLoader<ExpandableStatisticAdapter> {
 
         public static final int STATISTIC_LOADER_ID = 1;
-        private final Tour current_tour;
+        private final Tour load_tour;
         private final Context context;
 
         public StatisticLoader(Context context, Tour tour) {
             super(context);
             this.context = context;
-            this.current_tour = tour;
+            this.load_tour = tour;
         }
 
         @Override
@@ -155,6 +160,7 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
         @Override
         public ExpandableStatisticAdapter loadInBackground() {
             List<LocationStamp> stamps = getStamps();
+            Log.v(Main.LOG_TAG, "Got " + stamps.size() + " stamps for tour-ID: " + load_tour.getId());
             if (stamps.isEmpty()) return null;
             // Fill the Adapter:
             ArrayList<StatisticGroup> groups = new ArrayList<StatisticGroup>(1);
@@ -267,7 +273,7 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
                         context, DatabaseHelper.class
                 ).getLocationStampDao();
                 QueryBuilder<LocationStamp, Void> builder = location_dao.queryBuilder();
-                builder.where().eq("tour_id", current_tour.getId());
+                builder.where().eq("tour_id", load_tour.getId());
                 builder.orderBy("timestamp", true);
                 return builder.query();
             } catch (SQLException e) {
@@ -284,17 +290,29 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
      * <p>This method will cause the {@code TrackingService} to start tracking
      *  and recording your position-data.</p>
      * <p>If the service has already been started before, nothing will happen.</p>
-     * @param tour the tour to track.
      * @return {@code true} if the tracking-service was successfully started,
      *  {@code false} otherwise.
      * @see #stopTracking()
      */
-    private boolean startTracking(Tour tour){
+    private boolean startTracking(){
         if (!checkGpsEnabled()) return false;
         if (isTrackingServiceRunning(this)) return true;
+        // Check if we need to create the tour in the DB:
+        if (current_tour == Tour.UNSTORED_TOUR){
+            // Create a new tour in the database!
+            try {
+                Dao<Tour, Integer> dao = TourActivity.this.getHelper().getTourDao();
+                // Make the tour:
+                current_tour = new Tour(new Date());
+                dao.create(current_tour);
+                Log.v(Main.LOG_TAG, "Tour-ID is: "+current_tour.getId());
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
         // Start the service:
         Intent track_service = new Intent(this, TrackingService.class);
-        track_service.putExtra(TrackingService.TOUR_KEY, tour);
+        track_service.putExtra(TrackingService.TOUR_KEY, current_tour);
         if (this.startService(track_service) != null){
             Toast.makeText(this, "Started tracking. Ride like Hell!", Toast.LENGTH_LONG).show();
             live_view.setVisible(true);
@@ -311,13 +329,16 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
      * <p>If the service has already been stopped before, nothing will happen.</p>
      * @return {@code true} if the tracking-service was successfully stopped,
      *  {@code false} otherwise.
-     * @see #startTracking(org.knuth.biketrack.persistent.Tour)
+     * @see #startTracking()
      */
     private boolean stopTracking(){
         // Stop the service:
         if (this.stopService(new Intent(this, TrackingService.class))){
             Toast.makeText(this, "The drones are no longer following you.", Toast.LENGTH_LONG).show();
             live_view.setVisible(false);
+            map_menu_item.setVisible(true);
+            stats_menu_item.setVisible(true);
+            // TODO If we currently have internet access: http://developer.android.com/reference/android/location/Geocoder.html
             return true;
         } else
             Log.e(Main.LOG_TAG, "Couldn't stopp tracking-service!");
@@ -373,8 +394,8 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             See https://github.com/JakeWharton/ActionBarSherlock/issues/562
         */ // TODO Remove the inflater code and the menu XML!
         //this.getSupportMenuInflater().inflate(R.menu.tour_menu, menu);
-        menu.add(R.string.tourActivity_menu_showRecords)
-            .setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_IF_ROOM|MenuItem.SHOW_AS_ACTION_WITH_TEXT)
+        stats_menu_item = menu.add(R.string.tourActivity_menu_showRecords)
+            .setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT)
             .setIcon(android.R.drawable.ic_menu_sort_by_size)
             .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
@@ -383,8 +404,8 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
                     return true;
                 }
             });
-        menu.add(R.string.tourActivity_menu_showMap)
-            .setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_IF_ROOM|MenuItem.SHOW_AS_ACTION_WITH_TEXT)
+        map_menu_item = menu.add(R.string.tourActivity_menu_showMap)
+            .setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT)
             .setIcon(android.R.drawable.ic_menu_mapmode)
             .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
@@ -393,8 +414,14 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
                     return true;
                 }
             });
+        // Check if have a "real" tour and can use the map and statistics:
+        if (current_tour == Tour.UNSTORED_TOUR){
+            stats_menu_item.setVisible(false);
+            map_menu_item.setVisible(false);
+        }
+        // Item to get back to the life-activity:
         live_view = menu.add(R.string.tourActivtiy_menu_trackingActivity)
-            .setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_ALWAYS|MenuItem.SHOW_AS_ACTION_WITH_TEXT)
+            .setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_ALWAYS | MenuItem.SHOW_AS_ACTION_WITH_TEXT)
             .setIcon(android.R.drawable.ic_menu_mylocation)
             .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
