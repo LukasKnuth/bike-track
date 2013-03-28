@@ -74,6 +74,7 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             current_tour = extras.getParcelable(TrackingService.TOUR_KEY);
         } else {
             Log.e(Main.LOG_TAG, "No tour was supplied to TourActivity!");
+            this.finish();
         }
         this.setTitle(current_tour.toString());
         // Set the buttons text:

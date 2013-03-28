@@ -54,4 +54,3 @@ If you encounter any **problems or bugs**, please also *open a ticket* on the [I
 The roadmap for the next major change in the application-backend:
 
 5. Update the TourActivity as the "start-point" for a new tour. (When Tracking is started: store tour date. When finished, find out the start/goal city-names (https://developers.google.com/maps/documentation/geocoding/#ReverseGeocoding), calculate the tour-data and store it all in the database).
-6. Update the Main Activity to no longer ask for name/date (also remove the "rename"-option)

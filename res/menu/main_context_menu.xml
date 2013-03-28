@@ -6,9 +6,4 @@
           android:showAsAction="ifRoom|withText"
           android:icon="@android:drawable/ic_menu_delete"
           />
-    <item android:id="@+id/main_context_rename"
-          android:title="@string/main.contextmenu.rename"
-          android:showAsAction="ifRoom|withText"
-          android:icon="@android:drawable/ic_menu_edit"
-          />
 </menu>

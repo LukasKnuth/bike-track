@@ -11,12 +11,10 @@ import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.view.animation.TranslateAnimation;
 import android.widget.*;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -29,7 +27,10 @@ import org.knuth.biketrack.persistent.Tour;
 import org.knuth.biketrack.service.TrackingService;
 
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<Collection<Tour>> {
 
@@ -127,76 +128,15 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
      * Create a new Tour.
      */
     public void newTour(MenuItem item){
-        AlertDialog.Builder builder;
-        AlertDialog alertDialog;
-
-        LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
-        final View layout = inflater.inflate(R.layout.new_tour_dialog,
-                (ViewGroup) findViewById(R.id.tour_dialog_root));
-
-        builder = new AlertDialog.Builder(this);
-        builder.setView(layout);
-        builder.setTitle("Create a new Tour").setCancelable(true).
-                setPositiveButton("Done", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        // TODO Give NO tour-object to TourActivity and handle creation there!
-                        DatePicker date = (DatePicker)layout.findViewById(R.id.tour_date);
-                        EditText name = (EditText)layout.findViewById(R.id.tour_name);
-                        if (name.getText().toString().length() > 0){
-                            try {
-                                Dao<Tour, Integer> dao = Main.this.getHelper().getTourDao();
-                                // Make the date:
-                                Calendar calendar = Calendar.getInstance();
-                                calendar.set(date.getYear(), date.getMonth(), date.getDayOfMonth());
-                                final Tour new_tour = new Tour(calendar.getTime());
-                                dao.create(new_tour);
-                                // Add the new tour to the list. Also, animate!
-                                View offset = tour_list.getChildAt(0);
-                                if (offset != null){
-                                    Animation slide_down = new TranslateAnimation(0,0, 0, offset.getHeight());
-                                    slide_down.setDuration(300);
-                                    slide_down.setAnimationListener(new Animation.AnimationListener() {
-                                        @Override
-                                        public void onAnimationEnd(Animation animation) {
-                                            tour_adapter.insert(new_tour, 0); // TODO Not perfect yet... Without the "flicker"!
-                                        }
-
-                                        @Override public void onAnimationStart(Animation animation) {}
-                                        @Override public void onAnimationRepeat(Animation animation) {}
-                                    });
-                                    dialogInterface.dismiss();
-                                    tour_list.startAnimation(slide_down);
-                                } else {
-                                    tour_adapter.insert(new_tour, 0);
-                                }
-                            } catch (SQLException e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            Toast.makeText(Main.this, "Insert a name!", Toast.LENGTH_LONG).show();
-                        }
-                    }
-                });
-        alertDialog = builder.create();
-        alertDialog.show();
+        // Simply start the TourActivity without adding a tour-extra:
+        Intent tour_activity = new Intent(this, TourActivity.class);
+        this.startActivity(tour_activity);
     }
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo){
         if (v == tour_list){
             // Add the context menu for the tour-list:
-            menu.add(R.string.main_contextmenu_rename)
-                .setIcon(android.R.drawable.ic_menu_delete)
-                .setOnMenuItemClickListener(new android.view.MenuItem.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(android.view.MenuItem menuItem) {
-                        final AdapterView.AdapterContextMenuInfo info =
-                                (AdapterView.AdapterContextMenuInfo) menuItem.getMenuInfo();
-                        showRenameDialog(tour_adapter.getItem(info.position));
-                        return true;
-                    }
-                });
             menu.add(R.string.main_contextmenu_delete)
                 .setIcon(android.R.drawable.ic_menu_edit)
                 .setOnMenuItemClickListener(new android.view.MenuItem.OnMenuItemClickListener() {
@@ -226,12 +166,6 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
                     android.view.ActionMode actionMode, int position, long id, boolean checked) {
                 // Do something when items are de-/ selected.
                 actionMode.setTitle(tour_list.getCheckedItemCount()+" selected");
-                // Don't allow renaming multiple entries:
-                if (tour_list.getCheckedItemCount() > 1){
-                    actionMode.getMenu().findItem(R.id.main_context_rename).setVisible(false);
-                } else {
-                    actionMode.getMenu().findItem(R.id.main_context_rename).setVisible(true);
-                }
             }
 
             @Override
@@ -264,11 +198,6 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
                     case R.id.main_context_delete:
                         // Delete the selected items.
                         showDeleteDialog(selected_tours);
-                        actionMode.finish();
-                        return true;
-                    case R.id.main_context_rename:
-                        // Rename one selected item.
-                        showRenameDialog(selected_tours.get(0));
                         actionMode.finish();
                         return true;
                     default:
@@ -397,14 +326,6 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
                      tours.get(0).toString()+"' ?");
         }
         builder.create().show();
-    }
-
-    /**
-     * Shows the dialog to rename a single tour.
-     * @param tour the tour to rename.
-     */
-    private void showRenameDialog(final Tour tour){
-        // TODO Empty stub, this will be gone, soon...
     }
 
 }
