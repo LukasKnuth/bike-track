@@ -296,6 +296,9 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
                                             // The finished animation has been canceled and is no really done.
                                             tour_adapter.remove(tour);
                                             tour_list.getEmptyView().setVisibility(View.GONE);
+                                            // Notify the Loader that the data has changed:
+                                            Main.this.getSupportLoaderManager().
+                                                    getLoader(ToursLoader.TOUR_LOADER_ID).onContentChanged();
                                         }
                                     }
 
