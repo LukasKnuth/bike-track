@@ -33,7 +33,7 @@ public class TrackingActivity extends BaseActivity {
     private boolean isBound;
 
     private TextView current_speed;
-    private ScheduledThreadPoolExecutor clock = new ScheduledThreadPoolExecutor(1);
+    private ScheduledThreadPoolExecutor clock = new ScheduledThreadPoolExecutor(2);
     private ScheduledFuture hide_timer;
 
     // TODO Make this Activity with WakeLog (later commit) see (http://stackoverflow.com/questions/3660464)
@@ -72,15 +72,28 @@ public class TrackingActivity extends BaseActivity {
                 }, 2, TimeUnit.SECONDS);
             }
         });
-        this.getSupportActionBar().hide();
         // Enable going back from the ActionBar:
         this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        // Make sure the user sees how the ActionBar disappears:
+        clock.schedule(new Runnable() {
+            @Override
+            public void run() {
+                TrackingActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        // TODO Do this only ONCE...
+                        TrackingActivity.this.getSupportActionBar().hide();
+                    }
+                });
+            }
+        }, 500, TimeUnit.MILLISECONDS);
     }
 
     private TrackingListener callback = new TrackingListener() {
         @Override
         public void update(LocationStamp data) {
             // Last update on activity...
+            // TODO Add using the measurement system from application prefs here!
             current_speed.setText(data.getSpeed()+" Km/h");
         }
     };
