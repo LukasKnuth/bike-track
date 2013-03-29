@@ -3,14 +3,22 @@ package org.knuth.biketrack;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
 import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.service.TrackingListener;
 import org.knuth.biketrack.service.TrackingService;
 import org.knuth.biketrack.service.TrackingService.TrackingBinder;
+
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>The Activity which is shown, when currently tracking the position.</p>
@@ -25,6 +33,8 @@ public class TrackingActivity extends BaseActivity {
     private boolean isBound;
 
     private TextView current_speed;
+    private ScheduledThreadPoolExecutor clock = new ScheduledThreadPoolExecutor(1);
+    private ScheduledFuture hide_timer;
 
     // TODO Make this Activity with WakeLog (later commit) see (http://stackoverflow.com/questions/3660464)
 
@@ -38,6 +48,33 @@ public class TrackingActivity extends BaseActivity {
         }
         this.setContentView(R.layout.tracking);
         current_speed = (TextView) findViewById(R.id.tracking_current_speed);
+        // Show ActionBar if we click *somewhere*:
+        this.findViewById(R.id.tracking_root).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Hide it automatically after 2 seconds:
+                if (hide_timer != null){
+                    hide_timer.cancel(false);
+                } else {
+                    TrackingActivity.this.getSupportActionBar().show();
+                }
+                hide_timer = clock.schedule(new Runnable() {
+                    @Override
+                    public void run() {
+                        TrackingActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                TrackingActivity.this.getSupportActionBar().hide();
+                            }
+                        });
+                        hide_timer = null;
+                    }
+                }, 2, TimeUnit.SECONDS);
+            }
+        });
+        this.getSupportActionBar().hide();
+        // Enable going back from the ActionBar:
+        this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
     private TrackingListener callback = new TrackingListener() {
@@ -84,5 +121,35 @@ public class TrackingActivity extends BaseActivity {
             Log.e(Main.LOG_TAG, "Service connection Lost...");
         }
     };
+
+    /** ---- ActionBar Magic ---- */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)){
+            menu.add(R.string.tracking_menu_take_photo).
+                    setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_IF_ROOM).
+                    setIcon(android.R.drawable.ic_menu_camera).
+                    setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                            // TODO Start photo Stuff here!
+                            return false;
+                        }
+                    });
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected (MenuItem item){
+        super.onOptionsItemSelected(item);
+        switch (item.getItemId()){
+            // If the Logo in the ActionBar is pressed, simulate a "BACK"-button press.
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+        }
+        return false;
+    }
 
 }
