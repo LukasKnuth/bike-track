@@ -433,6 +433,9 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
                     return true;
                 }
             }).setVisible(false);
+        if (isTrackingServiceRunning(this)){
+            live_view.setVisible(true);
+        }
         return true;
     }
 
