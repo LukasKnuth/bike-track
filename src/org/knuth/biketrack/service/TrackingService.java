@@ -45,6 +45,8 @@ public class TrackingService extends OrmLiteBaseService<DatabaseHelper> {
     /** The callback to send updated to the Activity */
     private TrackingListener callback;
 
+    // TODO React on GPS being disabled while tracking and end the service.
+
     @Override
     public void onCreate() {
         super.onCreate();
