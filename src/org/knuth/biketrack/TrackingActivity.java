@@ -145,9 +145,8 @@ public class TrackingActivity extends BaseActivity {
                     setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                         @Override
                         public boolean onMenuItemClick(MenuItem item) {
-                            Intent camera_activity = new Intent(TrackingActivity.this, CameraActivity.class);
-                            TrackingActivity.this.startActivity(camera_activity);
-                            return true;
+                            // TODO Start photo Stuff here!
+                            return false;
                         }
                     });
         }
