@@ -20,6 +20,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     private Camera camera;
     private final int id;
     private final Activity target;
+    private Camera.Parameters parameters;
 
     public CameraPreview(Activity activity) {
         super(activity);
@@ -29,6 +30,9 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         holder = this.getHolder();
         holder.addCallback(this);
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        // Get the Camera:
+        camera = Camera.open(id);
+        parameters = camera.getParameters();
     }
 
     @Override
@@ -36,7 +40,6 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         // The Surface has been created, acquire the camera and tell it where
         // to draw.
         try {
-            camera = Camera.open(id);
             camera.setPreviewDisplay(holder);
             setCameraDisplayOrientation(target, id, camera);
         } catch (Exception e) {
@@ -68,6 +71,24 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
         camera.setParameters(parameters);
         camera.startPreview();
+    }
+
+    /**
+     * <p>Returns the {@code Camera.Parameters} object for the internal camera.</p>
+     * <p>For changed to take effect, you'll <b>need to call</b> {@code updateCamera()}</p>
+     * @return the parameters for the camera.
+     * @see #updateCamera()
+     */
+    public Camera.Parameters getParameters(){
+        return this.parameters;
+    }
+
+    /**
+     * <p>Call this to make changes to the camera-parameters to take effect.</p>
+     * @see #getParameters()
+     */
+    public void updateCamera(){
+        camera.setParameters(parameters);
     }
 
     private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
@@ -103,7 +124,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         return optimalSize;
     }
 
-    public void setCameraDisplayOrientation(Activity activity, int cameraId, Camera camera) {
+    private void setCameraDisplayOrientation(Activity activity, int cameraId, Camera camera) {
         Camera.CameraInfo info = new Camera.CameraInfo();
         Camera.getCameraInfo(cameraId, info);
         int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
@@ -125,7 +146,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         camera.setDisplayOrientation(result);
     }
 
-    public int getBackFacingCameraID(){
+    private int getBackFacingCameraID(){
         Camera.CameraInfo info = new Camera.CameraInfo();
         for (int i = 0; i < Camera.getNumberOfCameras(); i++){
             Camera.getCameraInfo(i, info);
