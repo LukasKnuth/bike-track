@@ -1,21 +1,28 @@
 package org.knuth.biketrack;
 
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import org.knuth.biketrack.persistent.LocationStamp;
+import org.knuth.biketrack.persistent.Tour;
+import org.knuth.biketrack.photo.PhotoUtils;
 import org.knuth.biketrack.service.TrackingListener;
 import org.knuth.biketrack.service.TrackingService;
 import org.knuth.biketrack.service.TrackingService.TrackingBinder;
 
+import java.io.*;
+import java.nio.channels.FileChannel;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +37,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class TrackingActivity extends BaseActivity {
 
+    private static final int CAMERA_REQUEST_CODE = 42;
+
+    private PhotoWorker scheduled_worker;
+
+    private LocationStamp last_location;
+    private Tour current_tour;
     private boolean isBound;
 
     private TextView current_speed;
@@ -93,24 +106,29 @@ public class TrackingActivity extends BaseActivity {
         @Override
         public void update(LocationStamp data) {
             // Last update on activity...
+            last_location = data;
             // TODO Add using the measurement system from application prefs here!
             current_speed.setText(data.getSpeed()+" Km/h");
         }
     };
 
     @Override
-    public void onResume(){
-        super.onResume();
+    public void onStart(){
+        super.onStart();
         Intent intent = new Intent(this, TrackingService.class);
         if (this.bindService(intent, tracking_connection, 0)){
             // Success!
             isBound = true;
+            // Check if we can start a scheduled worker:
+            if (this.scheduled_worker != null){
+                this.scheduled_worker.execute();
+            }
         }
     }
 
     @Override
-    public void onPause(){
-        super.onPause();
+    public void onStop(){
+        super.onStop();
         if (isBound){
             // Unbind from the Service:
             unbindService(tracking_connection);
@@ -125,8 +143,9 @@ public class TrackingActivity extends BaseActivity {
             TrackingBinder binder = (TrackingBinder) iBinder;
             binder.requestUpdates(callback);
             // Get the current tours information:
-            String tour_name = binder.getTrackedTour().toString();
-            ((TextView) findViewById(R.id.tracking_tour_name)).setText(tour_name);
+            last_location = binder.getLatestLocation();
+            current_tour = binder.getTrackedTour();
+            ((TextView) findViewById(R.id.tracking_tour_name)).setText(current_tour.toString());
         }
 
         @Override
@@ -134,6 +153,66 @@ public class TrackingActivity extends BaseActivity {
             Log.e(Main.LOG_TAG, "Service connection Lost...");
         }
     };
+
+    /**
+     * <p>Takes care of finding, moving and Geo-Tagging a new taken image.</p>
+     * <p>This should be called after the Activity is fully created, since it
+     *  uses global Activity variables!</p>
+     */
+    private class PhotoWorker extends AsyncTask<Void, Void, Void>{
+
+        private final ContentResolver resolver;
+
+        public PhotoWorker(ContentResolver resolver){
+            super();
+            this.resolver = resolver;
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            // An image was taken, now the fun begins:
+            try {
+                // Get the Image last added to the Gallery:
+                File gallery_file = PhotoUtils.getLastImagePath(resolver);
+                Log.v(Main.LOG_TAG, "Photo: " + gallery_file.getAbsolutePath());
+                // Copy it to the BikeTrack folder:
+                FileChannel source = new FileInputStream(gallery_file).getChannel();
+                File moved_file = PhotoUtils.generateNewTourImage(current_tour);
+                FileChannel dest = new FileOutputStream(moved_file).getChannel();
+                try {
+                    dest.transferFrom(source, 0, source.size());
+                } finally {
+                    source.close();
+                    dest.close();
+                }
+                // Delete it from the Gallery:
+                gallery_file.delete();
+                PhotoUtils.updateGalleryFile(resolver, gallery_file, moved_file);
+                gallery_file = null;
+                // Geo-Tag it!
+                // TODO What do we do if no location is yet available?
+                PhotoUtils.geoTagImage(moved_file, last_location.getLatitude(), last_location.getLongitude());
+            } catch (IllegalStateException e){
+                // The Gallery is empty...
+                e.printStackTrace();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == CAMERA_REQUEST_CODE){
+            if (resultCode == RESULT_OK){
+                // Only "schedule" the worker, don't execute:
+                this.scheduled_worker = new PhotoWorker(this.getContentResolver());
+            }
+        }
+    }
 
     /** ---- ActionBar Magic ---- */
     @Override
@@ -145,8 +224,10 @@ public class TrackingActivity extends BaseActivity {
                     setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                         @Override
                         public boolean onMenuItemClick(MenuItem item) {
-                            // TODO Start photo Stuff here!
-                            return false;
+                            Intent take_photo = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                            // TODO This only works with DHD. Specify the OUTPUT-intent for Xoom
+                            startActivityForResult(take_photo, CAMERA_REQUEST_CODE);
+                            return true;
                         }
                     });
         }

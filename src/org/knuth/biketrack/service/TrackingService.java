@@ -41,6 +41,7 @@ public class TrackingService extends OrmLiteBaseService<DatabaseHelper> {
     private long mLastLocationMillis;
     /** The current {@code Tour} we're taking. */
     private Tour current_tour;
+    private LocationStamp last_location;
 
     /** The callback to send updated to the Activity */
     private TrackingListener callback;
@@ -64,6 +65,7 @@ public class TrackingService extends OrmLiteBaseService<DatabaseHelper> {
                             location.getSpeed(),
                             current_tour);
                     location_dao.create(data);
+                    last_location = data;
                 } catch (SQLException e) {
                     e.printStackTrace();
                 } finally {
@@ -117,10 +119,10 @@ public class TrackingService extends OrmLiteBaseService<DatabaseHelper> {
         // Otherwise, start and do initial work.
         super.onStartCommand(intent, flags, startId);
         // Get the current tour:
-        current_tour = intent.getExtras().getParcelable(TOUR_KEY);
-        if (current_tour == null){
+        if (intent == null || intent.getExtras() == null){
             throw new IllegalStateException("Can't work without a Tour!");
         }
+        current_tour = intent.getExtras().getParcelable(TOUR_KEY);
         // Bind the listeners:
         LocationManager loc = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
         loc.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 10, locationListener);
@@ -184,6 +186,14 @@ public class TrackingService extends OrmLiteBaseService<DatabaseHelper> {
         public Tour getTrackedTour(){
             // TODO Return defensive copy or keep this way (auto-updated)?
             return TrackingService.this.current_tour;
+        }
+
+        /**
+         * <p>Returns the last {@code LocationStamp} that the service took.</p>
+         * @return the last {@code LocationStamp} from the service.
+         */
+        public LocationStamp getLatestLocation(){
+            return last_location;
         }
     }
 }

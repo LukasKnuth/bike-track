@@ -2,6 +2,7 @@ package org.knuth.biketrack;
 
 import android.app.ProgressDialog;
 import android.graphics.Color;
+import android.media.ExifInterface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -12,14 +13,18 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.Dao;
 import org.knuth.biketrack.persistent.DatabaseHelper;
 import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.persistent.Tour;
+import org.knuth.biketrack.photo.PhotoUtils;
 import org.knuth.biketrack.service.TrackingService;
 
+import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -68,6 +73,7 @@ public class TrackMapActivity extends FragmentActivity {
         progress = new ProgressDialog(this);
         progress.setIndeterminate(true);
         new LoadTrack().execute(current_tour);
+        new LoadImages().execute(current_tour);
     }
 
     /**
@@ -126,6 +132,41 @@ public class TrackMapActivity extends FragmentActivity {
             map.moveCamera(CameraUpdateFactory.zoomTo(19.0f));
             // TODO When entering, Zoom out to see the FULL track.
             progress.dismiss();
+        }
+    }
+
+    private class LoadImages extends AsyncTask<Tour, MarkerOptions, Void>{
+
+        @Override
+        protected Void doInBackground(Tour... tours) {
+            File[] images = PhotoUtils.getTourImages(tours[0]);
+            Log.v(Main.LOG_TAG, "Found "+images.length+" images for tour-ID: "+tours[0].getId());
+            for (File image : images){
+                try {
+                    ExifInterface exif = new ExifInterface(image.getAbsolutePath());
+                    float[] pos = new float[2];
+                    if (exif.getLatLong(pos)){
+                        // Picture has LatLng
+                        publishProgress(new MarkerOptions().
+                                position(new LatLng(pos[0], pos[1])).
+                                title("Picture").
+                                draggable(false).
+                                visible(true)
+                        );
+                    } else {
+                        Log.v(Main.LOG_TAG, "No Exif available for "+image.getAbsolutePath());
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(MarkerOptions... marker){
+            map.addMarker(marker[0]);
+            Log.v(Main.LOG_TAG, "Added marker.");
         }
     }
 
