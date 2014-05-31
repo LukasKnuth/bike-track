@@ -6,14 +6,8 @@
               android:orientation="horizontal">
 
     <TextView android:id="@+id/statistic_item_view_description"
-              android:layout_height="fill_parent"
-              android:layout_width="wrap_content"
-              android:layout_weight="1"
-              android:gravity="left|bottom"
-              android:textSize="18sp"
-              android:textStyle="bold"
-              android:paddingLeft="5dp"
-              />
+              style="@style/StatisticDescriptionText"
+            />
 
     <TextView android:id="@+id/statistic_item_view_value"
               android:layout_height="fill_parent"

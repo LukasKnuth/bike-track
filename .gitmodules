@@ -4,3 +4,6 @@
 [submodule "libs/nine_old_android"]
 	path = libs/nine_old_android
 	url = https://github.com/JakeWharton/NineOldAndroids.git
+[submodule "libs/holo_graph_lib"]
+	path = libs/holo_graph_lib
+	url = https://bitbucket.org/danielnadeau/holographlibrary.git

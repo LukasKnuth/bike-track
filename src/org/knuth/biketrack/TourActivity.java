@@ -6,11 +6,10 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -23,24 +22,22 @@ import android.widget.ExpandableListView;
 import android.widget.Toast;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
+import com.echo.holographlibrary.Bar;
+import com.echo.holographlibrary.Line;
+import com.echo.holographlibrary.LineGraph;
+import com.echo.holographlibrary.LinePoint;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
-import org.knuth.biketrack.adapter.statistic.ExpandableStatisticAdapter;
-import org.knuth.biketrack.adapter.statistic.Statistic;
-import org.knuth.biketrack.adapter.statistic.StatisticGroup;
+import org.knuth.biketrack.adapter.statistic.*;
 import org.knuth.biketrack.persistent.DatabaseHelper;
 import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.persistent.Tour;
 import org.knuth.biketrack.service.TrackingService;
 
 import java.sql.SQLException;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * <p>An {@code Activity}, showing data about one single tour.</p>
@@ -54,15 +51,11 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
     // TODO Cache the tour-statistics in the Database.
     // TODO When we gain Internet access, check which (if any) tours need reverse-geocoding and do so...
 
-    private static final double METER_TO_MILE = 0.000621371192;
-    private static final float MS_TO_MPH = 2.23693629f;
-    private static final double METER_TO_KILOMETER = 0.001;
-    private static final float MS_TO_KMH = 3.6f;
-
     /** The tour which is currently shown on this Activity */
     private Tour current_tour;
 
     private ExpandableListView statistics;
+    private LineGraph speed_graph;
     private Button start_stop;
     /** ActionBar item, only shown when tracking to get back to {@code TrackingActivity} */
     private MenuItem live_view;
@@ -74,6 +67,7 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
         super.onCreate(saved);
         this.setContentView(R.layout.tour);
         statistics = (ExpandableListView)findViewById(R.id.statistics);
+        start_stop = (Button)this.findViewById(R.id.start_stop_tracking);
         // Get the Tour:
         Bundle extras = this.getIntent().getExtras();
         if (extras != null && extras.containsKey(TrackingService.TOUR_KEY)){
@@ -85,17 +79,27 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             this.setTitle("New Tour");
         }
         // Set the buttons text:
-        start_stop = (Button)this.findViewById(R.id.start_stop_tracking);
         if (isTrackingServiceRunning(this)){
             start_stop.setText("Stop tracking");
         } else {
-            start_stop.setText("Start tracking my position!");
+            if (current_tour != Tour.UNSTORED_TOUR){
+                // This is a previously tracked tour. Since the service isn't running, we don't need the stop button.
+                start_stop.setVisibility(View.GONE);
+            } else {
+                start_stop.setText("Start tracking my position!");
+            }
         }
         start_stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (isTrackingServiceRunning(TourActivity.this)){
-                    if (stopTracking()) start_stop.setText("Start tracking my position!");
+                    if (stopTracking()){
+                        start_stop.setText("Continue tracking my position!");
+                        // Show statistics when tour is ended:
+                        getSupportLoaderManager().initLoader(
+                                StatisticLoader.STATISTIC_LOADER_ID, null, TourActivity.this
+                        );
+                    }
                 } else {
                     if (startTracking()) start_stop.setText("Stop tracking");
                 }
@@ -182,13 +186,17 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             long secs = (end.getTime() - start.getTime()) / 1000;
             int mins = (int)(secs / 60);
             SimpleDateFormat format = new SimpleDateFormat("HH:mm");
+            SimpleDateFormat when = new SimpleDateFormat("d. MMM yyyy");
             // Pack everything up:
             StatisticGroup time_group = new StatisticGroup("Time");
+            time_group.add(new Statistic<String>(when.format(start), "", "Date"));
             time_group.add(new Statistic<String>(format.format(start), "", "Start time"));
             time_group.add(new Statistic<String>(format.format(end), "", "End time"));
             time_group.add(new Statistic<Integer>(mins, "min", "Overall time"));
             return time_group;
         }
+
+        // TODO Add the libraries (actionbarsherlock, nineoldandroid, google-paly-services) as maven repos.
 
         /**
          * Calculate the length of the track
@@ -196,6 +204,14 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
         private StatisticGroup getTrackGroup(List<LocationStamp> stamps){
             // TODO New way (V2) available?
             double total_distance = 0;
+            double current_distance = 0;
+            double downhill_distance = 0;
+            double uphill_distance = 0;
+            double flat_distance = 0;
+
+            final double flat_tolerance = 0.2;
+
+            double last_altitude = -1;
             Location location1 = null;
             Location location2 = new Location("pointB");
             // Calculate:
@@ -210,59 +226,114 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
                 location2.setLatitude(s.getLatitude());
                 location2.setLongitude(s.getLongitude());
                 // Calculate distance:
-                total_distance += location1.distanceTo(location2);
+                current_distance = location1.distanceTo(location2);
+                total_distance += current_distance;
                 // Set new start-location:
                 location1.set(location2);
+                // Update the bars:
+                if (last_altitude == -1){
+                    // First run:
+                    last_altitude = s.getAltitude();
+                } else {
+                    if ((s.getAltitude() - last_altitude) > flat_tolerance){
+                        uphill_distance += current_distance;
+                    } else if ((s.getAltitude() - last_altitude) < -flat_tolerance){
+                        downhill_distance += current_distance;
+                    } else {
+                        flat_distance += current_distance;
+                    }
+                    last_altitude = s.getAltitude();
+                }
             }
             // Calculate the distance depending on the set system:
             StatisticGroup track_group = new StatisticGroup("Track");
-            DecimalFormat formater = new DecimalFormat("#.##");
-            if (isMetric()){
-                total_distance = total_distance * METER_TO_KILOMETER;
-                track_group.add(new Statistic<String>(formater.format(total_distance), "Km", "Total distance"));
-            } else {
-                total_distance = total_distance * METER_TO_MILE;
-                track_group.add(new Statistic<String>(formater.format(total_distance), "mi", "Total distance"));
-            }
-            return track_group;
-        }
 
-        /**
-         * Checks whether the app is set to use the metric system or not.
-         * @return {@code true} if the metric system is used, {@code false} otherwise.
-         */
-        private boolean isMetric(){
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-            return prefs.getString(
-                    context.getString(R.string.prefs_key_system_of_measurement),
-                    context.getString(R.string.prefs_value_measure_system_metric)
-                   ).equals(context.getString(R.string.prefs_value_measure_system_metric));
+            Bar uphill_bar = new Bar();
+            uphill_bar.setName("Uphill");
+            uphill_bar.setColor(Color.parseColor("#AA1122"));
+            Bar downhill_bar = new Bar();
+            downhill_bar.setName("Downhill");
+            downhill_bar.setColor(Color.parseColor("#99CC00"));
+            Bar flat_bar = new Bar();
+            flat_bar.setName("Flat");
+            flat_bar.setColor(Color.parseColor("#229988"));
+
+            // Set values:
+            uphill_bar.setValue((float)Distance.toCurrentUnit(uphill_distance, context));
+            downhill_bar.setValue((float)Distance.toCurrentUnit(downhill_distance, context));
+            flat_bar.setValue((float)Distance.toCurrentUnit(flat_distance, context));
+            flat_bar.setValueString(Distance.formatCurrentUnit(flat_distance, context) + " Km");
+            uphill_bar.setValueString(Distance.formatCurrentUnit(uphill_distance, context)+" Km");
+            downhill_bar.setValueString(Distance.formatCurrentUnit(downhill_distance, context)+" Km");
+            track_group.add(new Statistic<String>(
+                    Distance.formatCurrentUnit(total_distance, context), "Km", "Total distance")
+            );
+            track_group.add(new BarGraphStatistic(
+                    "Terrain types", uphill_bar, flat_bar, downhill_bar)
+            );
+            return track_group;
         }
 
         /**
          * Calculate average- and top-speed
          */
         private StatisticGroup getSpeedGroup(List<LocationStamp> stamps){
-            float top_speed = 0;
-            float all_speed = 0; // needed for average calculation.
+            // setup:
+            float top_speed_ms = Collections.max(stamps, new Comparator<LocationStamp>() {
+                @Override
+                public int compare(LocationStamp locationStamp, LocationStamp locationStamp2) {
+                    return Float.compare(locationStamp.getSpeed(), locationStamp2.getSpeed());
+                }
+            }).getSpeed();
+            float all_speed = 0; // needed for average calculation. TODO Use "mittelwert" here?
+            Line speed_line = new Line();
+            speed_line.setShowingPoints(false);
+            speed_line.setColor(Color.parseColor("#FFBB33")); // TODO make resource...
+            Line altitude_line = new Line(); // Uphill/Downhill
+            altitude_line.setShowingPoints(false);
+            altitude_line.setColor(Color.parseColor("#99CC00"));
+            double last_altitude = -1;
+            double y = 0.0;
+
+            int x = 0;
+            boolean is_second = true;
+            // Process stamps:
             for (LocationStamp s : stamps){
                 all_speed += s.getSpeed();
-                if (top_speed < s.getSpeed()) top_speed = s.getSpeed();
+                // Draw the speed-line:
+                if (is_second){
+                    // A little trick to add only every second time-stamp to the graph. looks clearer...
+                    speed_line.addPoint(new LinePoint(x, s.getSpeed()));
+                    x++;
+                    is_second = false;
+                } else is_second = true;
+                // Draw the uphil/downhil line:
+                if (last_altitude == -1){
+                    // first round:
+                    last_altitude = s.getAltitude();
+                } else {
+                    if (last_altitude > s.getAltitude()){
+                        // Downhill:
+                        y -= 0.1;
+                    } else if (last_altitude < s.getAltitude()){
+                        // Uphill:
+                        y += 0.1;
+                    }
+                    altitude_line.addPoint(new LinePoint(x, y+top_speed_ms/2));
+                    last_altitude = s.getAltitude();
+                }
             }
-            float average_speed = all_speed / stamps.size();
+            float average_speed_ms = all_speed / stamps.size();
             // Calculate the statistics:
             StatisticGroup speed_group = new StatisticGroup("Speed");
-            if (isMetric()){
-                top_speed = (top_speed * MS_TO_KMH);
-                average_speed = (average_speed * MS_TO_KMH);
-                speed_group.add(new Statistic<Integer>((int)top_speed, "Km/h", "Top Speed"));
-                speed_group.add(new Statistic<Integer>((int)average_speed, "Km/h", "Average Speed"));
-            } else {
-                top_speed = (top_speed * MS_TO_MPH);
-                average_speed = (average_speed * MS_TO_MPH);
-                speed_group.add(new Statistic<Integer>((int)top_speed, "mph", "Top Speed"));
-                speed_group.add(new Statistic<Integer>((int)average_speed, "mph", "Average Speed"));
-            }
+            speed_group.add(new Statistic<String>(
+                    Speed.formatCurrentUnit(top_speed_ms, context), "Km/h", "Top Speed")
+            );
+            speed_group.add(new Statistic<String>(
+                    Speed.formatCurrentUnit(average_speed_ms, context), "Km/h", "Average Speed")
+            );
+            speed_group.add(new LineGraphStatistic("Speed over time", top_speed_ms, speed_line, altitude_line));
+
             return speed_group;
         }
 

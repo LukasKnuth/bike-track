@@ -18,6 +18,15 @@ import java.util.List;
  */
 public class ExpandableStatisticAdapter extends BaseExpandableListAdapter{
 
+    public enum ItemType{
+        TEXT_VIEW(0), LINE_GRAPH(1), BAR_GRAPH(2), PIE_GRAPH(3);
+
+        private final int id;
+        private ItemType(int id){
+            this.id = id;
+        }
+    }
+
     private final List<StatisticGroup> data;
     private final Context context;
 
@@ -84,20 +93,25 @@ public class ExpandableStatisticAdapter extends BaseExpandableListAdapter{
             int groupPosition, int childPosition, boolean isLastChild,
             View convertView, ViewGroup parent) {
         View v;
+        Statistic stat = data.get(groupPosition).get(childPosition);
+
         if (convertView != null){
             v = convertView;
         } else {
-            v = inflater.inflate(R.layout.statistic_item_view, parent, false);
+            v = inflater.inflate(stat.getResourceId(), parent, false);
         }
         // Bind the data:
-        Statistic stat = data.get(groupPosition).get(childPosition);
-        TextView value = (TextView)v.findViewById(R.id.statistic_item_view_value);
-        TextView unit = (TextView)v.findViewById(R.id.statistic_item_view_unit);
-        TextView desc = (TextView)v.findViewById(R.id.statistic_item_view_description);
-        value.setText(stat.getValue().toString());
-        unit.setText(stat.getUnit());
-        desc.setText(stat.getDescription());
-        return v;
+        return stat.getView(v, isLastChild);
+    }
+
+    @Override
+    public int getChildType(int groupPosition, int childPosition) {
+        return data.get(groupPosition).get(childPosition).getItemType().id;
+    }
+
+    @Override
+    public int getChildTypeCount() {
+        return ItemType.values().length;
     }
 
     @Override
