@@ -29,7 +29,13 @@ import com.echo.holographlibrary.LinePoint;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
-import org.knuth.biketrack.adapter.statistic.*;
+import org.knuth.biketrack.adapter.statistic.BarGraphStatistic;
+import org.knuth.biketrack.adapter.statistic.Distance;
+import org.knuth.biketrack.adapter.statistic.ExpandableStatisticAdapter;
+import org.knuth.biketrack.adapter.statistic.LineGraphStatistic;
+import org.knuth.biketrack.adapter.statistic.Speed;
+import org.knuth.biketrack.adapter.statistic.Statistic;
+import org.knuth.biketrack.adapter.statistic.StatisticGroup;
 import org.knuth.biketrack.persistent.DatabaseHelper;
 import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.persistent.Tour;
@@ -37,7 +43,11 @@ import org.knuth.biketrack.service.TrackingService;
 
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
 
 /**
  * <p>An {@code Activity}, showing data about one single tour.</p>
@@ -262,9 +272,9 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             uphill_bar.setValue((float)Distance.toCurrentUnit(uphill_distance, context));
             downhill_bar.setValue((float)Distance.toCurrentUnit(downhill_distance, context));
             flat_bar.setValue((float)Distance.toCurrentUnit(flat_distance, context));
-            flat_bar.setValueString(Distance.formatCurrentUnit(flat_distance, context) + " Km");
-            uphill_bar.setValueString(Distance.formatCurrentUnit(uphill_distance, context)+" Km");
-            downhill_bar.setValueString(Distance.formatCurrentUnit(downhill_distance, context)+" Km");
+            flat_bar.setName(Distance.formatCurrentUnit(flat_distance, context) + " Km");
+            uphill_bar.setName(Distance.formatCurrentUnit(uphill_distance, context) + " Km");
+            downhill_bar.setName(Distance.formatCurrentUnit(downhill_distance, context) + " Km");
             track_group.add(new Statistic<String>(
                     Distance.formatCurrentUnit(total_distance, context), "Km", "Total distance")
             );
@@ -319,7 +329,7 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
                         // Uphill:
                         y += 0.1;
                     }
-                    altitude_line.addPoint(new LinePoint(x, y+top_speed_ms/2));
+                    altitude_line.addPoint(new LinePoint(x, (float) y+top_speed_ms/2));
                     last_altitude = s.getAltitude();
                 }
             }
