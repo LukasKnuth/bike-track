@@ -4,8 +4,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.preference.Preference;
-import com.actionbarsherlock.app.SherlockPreferenceActivity;
-import com.actionbarsherlock.view.MenuItem;
+import android.view.MenuItem;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
 /**
@@ -13,7 +12,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
  * @author Lukas Knuth
  * @version 1.0
  */
-public class SettingsActivity extends SherlockPreferenceActivity {
+public class SettingsActivity extends AppCompatPreferenceActivity {
 
     // TODO Migrate this to use the new PreferenceFragment on 3.0+: http://stackoverflow.com/q/5501431/717341
 
