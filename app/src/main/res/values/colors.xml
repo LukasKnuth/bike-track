@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Statistics. Convention: statistics.[type].[what] -->
+    <color name="statistics.bar.uphill">#AA1122</color>
+    <color name="statistics.bar.downhill">#99CC00</color>
+    <color name="statistics.bar.flat">#229988</color>
+    <color name="statistics.line.speed">#FFBB33</color>
+    <color name="statistics.line.altitude">#99CC00</color>
+</resources>

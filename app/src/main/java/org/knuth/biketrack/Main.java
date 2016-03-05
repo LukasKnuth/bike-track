@@ -169,7 +169,7 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
             public void onItemCheckedStateChanged(
                     android.view.ActionMode actionMode, int position, long id, boolean checked) {
                 // Do something when items are de-/ selected.
-                actionMode.setTitle(tour_list.getCheckedItemCount()+" selected");
+                actionMode.setTitle(getString(R.string.main_actionbar_titleSelected, tour_list.getCheckedItemCount()));
             }
 
             @Override
@@ -268,8 +268,8 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
      */
     private void showDeleteDialog(final List<Tour> tours){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setCancelable(true).setTitle("Delete Tours").
-                setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+        builder.setCancelable(true).setTitle(R.string.main_dialog_deleteTitle).
+                setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         try {
@@ -312,25 +312,23 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
                                 animate_me.startAnimation(animation);
                             }
                             if (deleted == tours.size()) {
-                                Toast.makeText(Main.this, "Successfully deleted " + deleted + " tours",
+                                Toast.makeText(Main.this, getString(R.string.main_toast_deleteSuccess, deleted),
                                         Toast.LENGTH_SHORT).show();
                             }
                         } catch (SQLException e) {
                             e.printStackTrace();
                         }
                     }
-                }).setNegativeButton("No", new DialogInterface.OnClickListener() {
+                }).setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 dialogInterface.dismiss();
             }
         });
         if (tours.size() > 1){
-            builder.setMessage("Are you sure that you want to delete all " +
-                    tours.size() + " selected tours?");
+            builder.setMessage(getString(R.string.main_dialog_deleteTours, tours.size()));
         } else {
-            builder.setMessage("Are you sure that you want to delete '" +
-                     tours.get(0).toString()+"' ?");
+            builder.setMessage(getString(R.string.main_dialog_deleteTour, tours.get(0).toString()));
         }
         builder.create().show();
     }

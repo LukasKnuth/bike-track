@@ -2,15 +2,42 @@
 <resources>
     <string name="app_name">BikeTrack</string>
 
-    <!-- ActionBar menus - convention: [Activity].menu.[Name] -->
+    <!-- Activities. Convention: [Activity].[component].[Name] -->
     <string name="main.menu.newTour">Create Tour</string>
-    <string name="tourActivity.menu.showRecords">Show records</string>
-    <string name="tourActivity.menu.showMap">Show Track-Map</string>
-    <string name="tourActivtiy.menu.trackingActivity">Show live info</string>
     <string name="main.contextmenu.delete">Delete</string>
     <string name="main.contextmenu.rename">Rename</string>
     <string name="main.menu.settings">Settings</string>
+    <string name="main.actionbar.titleSelected">%s selected</string>
+    <string name="main.dialog.deleteTitle">Delete Tours</string>
+    <string name="main.dialog.deleteTours">Are you sure that you want to delete all %s selected tours?</string>
+    <string name="main.dialog.deleteTour">Are you sure that you want to delete "%s" ?"</string>
+    <string name="main.toast.deleteSuccess">Successfully deleted %s tours</string>
+
+    <string name="tourActivity.menu.showRecords">Show records</string>
+    <string name="tourActivity.menu.showMap">Show Track-Map</string>
+    <string name="tourActivtiy.menu.trackingActivity">Show live info</string>
+    <string name="tourActivity.general.newTour">New Tour</string>
+    <string name="tourActivity.button.startTracking">Start tracking my position!</string>
+    <string name="tourActivity.button.stopTracking">Stop tracking</string>
+    <string name="tourActivity.button.continueTracking">Continue tracking my position!</string>
+    <string name="tourActivity.statistics.track">Track</string>
+    <string name="tourActivity.statistics.uphill">Uphill</string>
+    <string name="tourActivity.statistics.downhill">Downhill</string>
+    <string name="tourActivity.statistics.flat">Flat</string>
+    <string name="tourActivity.statistics.distance">Total distance</string>
+    <string name="tourActivity.statistics.terrain">Terrain types</string>
+    <string name="tourActivity.statistics.speed">Speed</string>
+    <string name="tourActivity.statistics.topSpeed">Top Speed</string>
+    <string name="tourActivity.statistics.avgSpeed">Average Speed</string>
+    <string name="tourActivity.statistics.speedOverTime">Speed over time</string>
+    <string name="tourActivity.toast.startTracking">Started tracking. Ride like Hell!</string>
+    <string name="tourActivity.toast.stopTracking">The drones are no longer following you.</string>
+    <string name="tourActivity.dialog.gpsDisabled">GPS is currently disabled. You\'ll need to enable it.</string>
+    <string name="tourActivity.dialog.gotoSettings">Settings</string>
+
     <string name="tracking.menu.take_photo">Take Photo</string>
+
+    <string name="map.actionbar.title">Map for "%s"</string>
 
     <!-- Settings values - convention: prefs.[Label/Value/Key].[Name] -->
     <string name="prefs.key.show_opensource_license">show_opensource_license</string>
@@ -33,9 +60,11 @@
         <item>@string/prefs.value.measure_system_imperial</item>
     </array>
 
+    <!-- General Labels. Convention: label.[type].[what] -->
     <string name="label.unit.kmh">km/h</string>
     <string name="label.unit.mph">mph</string>
     <string name="label.unit.miles">m</string>
     <string name="label.unit.kilometers">km</string>
+    <string name="label.process.loading">Loading data...</string>
 
 </resources>

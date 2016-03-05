@@ -94,7 +94,7 @@ public class TrackingActivity extends BaseActivity {
         public void update(LocationStamp data) {
             // Last update on activity...
             // TODO Add using the measurement system from application prefs here!
-            current_speed.setText(data.getSpeed()+" Km/h");
+            current_speed.setText(data.getSpeed()+" "+getString(R.string.label_unit_kmh));
         }
     };
 

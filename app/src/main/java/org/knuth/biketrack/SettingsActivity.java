@@ -28,7 +28,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                     public boolean onPreferenceClick(Preference preference) {
                         AlertDialog.Builder b = new AlertDialog.Builder(SettingsActivity.this);
                         b.setMessage(GooglePlayServicesUtil.getOpenSourceSoftwareLicenseInfo(SettingsActivity.this));
-                        b.setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+                        b.setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
                                 dialogInterface.dismiss();

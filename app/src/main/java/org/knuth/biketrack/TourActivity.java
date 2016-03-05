@@ -6,7 +6,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -86,17 +85,17 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
         } else {
             current_tour = Tour.UNSTORED_TOUR;
             Log.e(Main.LOG_TAG, "No tour was supplied, so I created one.");
-            this.setTitle("New Tour");
+            this.setTitle(getString(R.string.tourActivity_general_newTour));
         }
         // Set the buttons text:
         if (isTrackingServiceRunning(this)){
-            start_stop.setText("Stop tracking");
+            start_stop.setText(R.string.tourActivity_button_stopTracking);
         } else {
             if (current_tour != Tour.UNSTORED_TOUR){
                 // This is a previously tracked tour. Since the service isn't running, we don't need the stop button.
                 start_stop.setVisibility(View.GONE);
             } else {
-                start_stop.setText("Start tracking my position!");
+                start_stop.setText(R.string.tourActivity_button_startTracking);
             }
         }
         start_stop.setOnClickListener(new View.OnClickListener() {
@@ -104,14 +103,14 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             public void onClick(View view) {
                 if (isTrackingServiceRunning(TourActivity.this)){
                     if (stopTracking()){
-                        start_stop.setText("Continue tracking my position!");
+                        start_stop.setText(R.string.tourActivity_button_continueTracking);
                         // Show statistics when tour is ended:
                         getSupportLoaderManager().initLoader(
                                 StatisticLoader.STATISTIC_LOADER_ID, null, TourActivity.this
                         );
                     }
                 } else {
-                    if (startTracking()) start_stop.setText("Stop tracking");
+                    if (startTracking()) start_stop.setText(R.string.tourActivity_button_stopTracking);
                 }
             }
         });
@@ -256,27 +255,30 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
                 }
             }
             // Calculate the distance depending on the set system:
-            StatisticGroup track_group = new StatisticGroup("Track");
+            StatisticGroup track_group = new StatisticGroup(context.getString(R.string.tourActivity_statistics_track));
 
             Bar uphill_bar = new Bar();
-            uphill_bar.setName("Uphill");
-            uphill_bar.setColor(Color.parseColor("#AA1122"));
+            uphill_bar.setName(context.getString(R.string.tourActivity_statistics_uphill));
+            uphill_bar.setColor(context.getResources().getColor(R.color.statistics_bar_uphill));
             Bar downhill_bar = new Bar();
-            downhill_bar.setName("Downhill");
-            downhill_bar.setColor(Color.parseColor("#99CC00"));
+            downhill_bar.setName(context.getString(R.string.tourActivity_statistics_downhill));
+            downhill_bar.setColor(context.getResources().getColor(R.color.statistics_bar_downhill));
             Bar flat_bar = new Bar();
-            flat_bar.setName("Flat");
-            flat_bar.setColor(Color.parseColor("#229988"));
+            flat_bar.setName(context.getString(R.string.tourActivity_statistics_flat));
+            flat_bar.setColor(context.getResources().getColor(R.color.statistics_bar_flat));
 
             // Set values:
             uphill_bar.setValue((float)Distance.toCurrentUnit(uphill_distance, context));
             downhill_bar.setValue((float)Distance.toCurrentUnit(downhill_distance, context));
             flat_bar.setValue((float)Distance.toCurrentUnit(flat_distance, context));
             track_group.add(new Statistic<String>(
-                    Distance.formatCurrentUnit(total_distance, context), "Km", "Total distance")
+                            Distance.formatCurrentUnit(total_distance, context),
+                            context.getString(R.string.label_unit_kilometers),
+                            context.getString(R.string.tourActivity_statistics_distance))
             );
             track_group.add(new BarGraphStatistic(
-                            "Terrain types", Distance.getCurrentUnit(context),
+                            context.getString(R.string.tourActivity_statistics_terrain),
+                            Distance.getCurrentUnit(context),
                             uphill_bar, flat_bar, downhill_bar)
             );
             return track_group;
@@ -296,10 +298,10 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             float all_speed = 0; // needed for average calculation. TODO Use "mittelwert" here?
             Line speed_line = new Line();
             speed_line.setShowingPoints(false);
-            speed_line.setColor(Color.parseColor("#FFBB33")); // TODO make resource...
+            speed_line.setColor(context.getResources().getColor(R.color.statistics_line_speed));
             Line altitude_line = new Line(); // Uphill/Downhill
             altitude_line.setShowingPoints(false);
-            altitude_line.setColor(Color.parseColor("#99CC00"));
+            altitude_line.setColor(context.getResources().getColor(R.color.statistics_line_altitude));
             double last_altitude = -1;
             double y = 0.0;
 
@@ -333,14 +335,21 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             }
             float average_speed_ms = all_speed / stamps.size();
             // Calculate the statistics:
-            StatisticGroup speed_group = new StatisticGroup("Speed");
+            StatisticGroup speed_group = new StatisticGroup(context.getString(R.string.tourActivity_statistics_speed));
             speed_group.add(new Statistic<String>(
-                    Speed.formatCurrentUnit(top_speed_ms, context), "Km/h", "Top Speed")
+                            Speed.formatCurrentUnit(top_speed_ms, context),
+                            context.getString(R.string.label_unit_kmh),
+                            context.getString(R.string.tourActivity_statistics_topSpeed))
             );
             speed_group.add(new Statistic<String>(
-                    Speed.formatCurrentUnit(average_speed_ms, context), "Km/h", "Average Speed")
+                            Speed.formatCurrentUnit(average_speed_ms, context),
+                            context.getString(R.string.label_unit_kmh),
+                            context.getString(R.string.tourActivity_statistics_avgSpeed))
             );
-            speed_group.add(new LineGraphStatistic("Speed over time", top_speed_ms, speed_line, altitude_line));
+            speed_group.add(new LineGraphStatistic(
+                    context.getString(R.string.tourActivity_statistics_speedOverTime),
+                    top_speed_ms, speed_line, altitude_line
+            ));
 
             return speed_group;
         }
@@ -395,7 +404,7 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
         Intent track_service = new Intent(this, TrackingService.class);
         track_service.putExtra(TrackingService.TOUR_KEY, current_tour);
         if (this.startService(track_service) != null){
-            Toast.makeText(this, "Started tracking. Ride like Hell!", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.tourActivity_toast_startTracking, Toast.LENGTH_LONG).show();
             live_view.setVisible(true);
             Intent tracking_activity = new Intent(this, TrackingActivity.class);
             this.startActivity(tracking_activity);
@@ -415,7 +424,7 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
     private boolean stopTracking(){
         // Stop the service:
         if (this.stopService(new Intent(this, TrackingService.class))){
-            Toast.makeText(this, "The drones are no longer following you.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.tourActivity_toast_stopTracking, Toast.LENGTH_LONG).show();
             live_view.setVisible(false);
             map_menu_item.setVisible(true);
             stats_menu_item.setVisible(true);
@@ -451,14 +460,14 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
         if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             // GPS is not enabled:
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("GPS is currently disabled. You'll need to enable it.")
+            builder.setMessage(R.string.tourActivity_dialog_gpsDisabled)
                     .setCancelable(false)
-                    .setPositiveButton("Settings", new DialogInterface.OnClickListener() {
+                    .setPositiveButton(R.string.tourActivity_dialog_gotoSettings, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
                         }
                     })
-                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.dismiss();
                         }
