@@ -205,8 +205,6 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             return time_group;
         }
 
-        // TODO Add the libraries (actionbarsherlock, nineoldandroid, google-paly-services) as maven repos.
-
         /**
          * Calculate the length of the track
          */
