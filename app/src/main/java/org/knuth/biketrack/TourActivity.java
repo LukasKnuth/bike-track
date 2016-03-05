@@ -441,9 +441,11 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
      * @see <a href="http://stackoverflow.com/a/5921190/717341">SO answer</a>
      */
     public static boolean isTrackingServiceRunning(Context context) {
+        // TODO There should be a better way to check this. REFACTOR!
         ActivityManager manager = (ActivityManager) context.getSystemService(ACTIVITY_SERVICE);
+        String serviceName = TrackingService.class.getName();
         for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if ("org.knuth.biketrack.service.TrackingService".equals(service.service.getClassName())) {
+            if (serviceName.equals(service.service.getClassName())) {
                 return true;
             }
         }
