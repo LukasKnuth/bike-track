@@ -17,21 +17,31 @@ When the app is finished, the following capabilities will be implemented:
 
 ## Get it
 
-I'm not yet sure if the application will ever make it to Google Play. Therefore, you'll want to download the `.apk`-file from the download section of this project, copy it to your device and install it manually.
-
-If you ever pirated an application, you'll probably know how to do that ;)
+See [Build it](#build-it)
 
 ### Build it
 
-At the moment, you'll need to have the *Android SDK*, *Platform 4.1* and the *Google Play Services* for that platform, to successfully build the source yourself.
+Before you can build the application with the provided gradle-scripts, you'll need to create the following two files:
 
-Also, you'll want to clone the git sub-modules before building the application.
-
-Build scripts and other helpers *may* follow.
+* **Prerequisites** You have (created) a certificate to sign the app with.
+* `signing.properties`: Defines what certificate to use and how to open it. See `signing_example.properties`.
+* `apikeys.properties`: Defines all necessary API keys. Currently, only a Google Maps API Key is required, which you must generate with the certificate used above. See the [Google Maps Android Docs](https://developers.google.com/maps/documentation/android-api/signup) for more information.
 
 ## License
 
-You may use the application free of any charge, if you like.
+    Copyright 2012 Lukas Knuth
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 
 ## Contribution
 
