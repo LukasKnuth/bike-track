@@ -121,3 +121,4 @@ hs_err_pid*
 # Signing specific stuff:
 debug.jks
 signing.properties
+apikeys.properties

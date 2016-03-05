@@ -54,6 +54,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    // Inject the replacement-value for all Api Keys into the build-types.
+    // We keep the API Keys separate so we don't have to share them in the public repository.
+    def propsFile = rootProject.file("apikeys.properties")
+    if (!propsFile.exists()){
+        throw new InvalidUserDataException("\"apikeys.properties\" File with API Keys not found!");
+    }
+    def props = new Properties();
+    props.load(new FileInputStream(propsFile))
+    buildTypes.all{ buildType ->
+        buildType.manifestPlaceholders.put("mapsApiKey", props.mapsApiKey)
+    }
 }
 
 dependencies {
