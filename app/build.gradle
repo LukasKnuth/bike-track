@@ -18,15 +18,38 @@ android {
     buildToolsVersion "22.0.1"
 
     defaultConfig {
-        applicationId "org.knuth.biketrack"
+        applicationId "org.codeisland.biketrack"
         minSdkVersion 16
         targetSdkVersion 21
         versionCode 2
         versionName "1.1"
     }
 
+    signingConfigs {
+        // Load the configuration for signing from a properties file, which is NOT shared.
+        def propsFile = rootProject.file("signing.properties")
+        if (!propsFile.exists()){
+            // Signing the APK is necessary, because the Google Maps API doesn't work otherwise.
+            throw new InvalidUserDataException("\"signing.properties\" File with signing configuration was not found.")
+        }
+        def props = new Properties()
+        props.load(new FileInputStream(propsFile))
+
+        mapsSupport {
+            storeFile rootProject.file(props.keystore)
+            storePassword props.storePass
+            keyAlias props.alias
+            keyPassword props.keyPass
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig signingConfigs.mapsSupport
+            debuggable true
+        }
         release {
+            signingConfig signingConfigs.mapsSupport
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
