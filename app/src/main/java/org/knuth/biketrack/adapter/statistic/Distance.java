@@ -70,4 +70,8 @@ public class Distance {
         return format.format(toKilometers(meters));
     }
 
+    public static String getCurrentUnit(Context context){
+        return isMetric(context) ? context.getString(R.string.label_unit_kilometers) : context.getString(R.string.label_unit_miles);
+    }
+
 }

@@ -272,14 +272,12 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             uphill_bar.setValue((float)Distance.toCurrentUnit(uphill_distance, context));
             downhill_bar.setValue((float)Distance.toCurrentUnit(downhill_distance, context));
             flat_bar.setValue((float)Distance.toCurrentUnit(flat_distance, context));
-            flat_bar.setName(Distance.formatCurrentUnit(flat_distance, context) + " Km");
-            uphill_bar.setName(Distance.formatCurrentUnit(uphill_distance, context) + " Km");
-            downhill_bar.setName(Distance.formatCurrentUnit(downhill_distance, context) + " Km");
             track_group.add(new Statistic<String>(
                     Distance.formatCurrentUnit(total_distance, context), "Km", "Total distance")
             );
             track_group.add(new BarGraphStatistic(
-                    "Terrain types", uphill_bar, flat_bar, downhill_bar)
+                            "Terrain types", Distance.getCurrentUnit(context),
+                            uphill_bar, flat_bar, downhill_bar)
             );
             return track_group;
         }

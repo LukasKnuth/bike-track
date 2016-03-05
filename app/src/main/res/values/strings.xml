@@ -33,4 +33,9 @@
         <item>@string/prefs.value.measure_system_imperial</item>
     </array>
 
+    <string name="label.unit.kmh">km/h</string>
+    <string name="label.unit.mph">mph</string>
+    <string name="label.unit.miles">m</string>
+    <string name="label.unit.kilometers">km</string>
+
 </resources>

@@ -18,9 +18,11 @@ import java.util.Arrays;
 public class BarGraphStatistic extends Statistic<Bar> {
 
     private final ArrayList<Bar> bars;
+    private final String unit;
 
-    public BarGraphStatistic(String description, Bar ...bars) {
+    public BarGraphStatistic(String description, String unit, Bar ...bars) {
         super(null, null, description);
+        this.unit = unit;
         this.bars = new ArrayList<Bar>(Arrays.asList(bars));
     }
 
@@ -41,6 +43,8 @@ public class BarGraphStatistic extends Statistic<Bar> {
         desc.setText(getDescription());
         if (graph.getBars().size() != this.bars.size()){
             graph.setBars(this.bars);
+            graph.setUnit(this.unit);
+            graph.appendUnit(true);
         }
         return v;
     }
