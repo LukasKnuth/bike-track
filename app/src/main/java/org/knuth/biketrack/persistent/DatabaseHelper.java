@@ -21,7 +21,7 @@ import java.sql.SQLException;
 public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
     private final static String DB_NAME = "bike_track.db";
-    private final static int DB_VERSION = 6;
+    private final static int DB_VERSION = 7;
 
     private Dao<LocationStamp, Void> location_dao;
     private Dao<Tour, Integer> tour_dao;
@@ -66,14 +66,29 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase db, ConnectionSource conSource, int i, int i1) {
-        try {
-            TableUtils.dropTable(conSource, LocationStamp.class, true);
-            TableUtils.dropTable(conSource, Tour.class, true);
-            onCreate(db, conSource);
-        } catch (SQLException e){
-            throw new RuntimeException(e);
+    public void onUpgrade(SQLiteDatabase db, ConnectionSource conSource, int oldVersion, int newVersion) {
+        if (newVersion == 7){
+            /*
+                This added titles to the Tour-table!
+            */
+            try {
+                Dao<Tour, Integer> dao = getDao(Tour.class);
+                dao.executeRaw("ALTER TABLE tours ADD COLUMN title TEXT");
+                dao.executeRaw("UPDATE tours SET title = \"Tour #\" || id");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+        } else {
+            // Older versions of the DB don't have an update routine!
+            try {
+                TableUtils.dropTable(conSource, LocationStamp.class, true);
+                TableUtils.dropTable(conSource, Tour.class, true);
+                onCreate(db, conSource);
+            } catch (SQLException e){
+                throw new RuntimeException(e);
+            }
+            Log.v(Main.LOG_TAG, "Recreated the DB");
         }
-        Log.v(Main.LOG_TAG, "Recreated the DB");
     }
 }

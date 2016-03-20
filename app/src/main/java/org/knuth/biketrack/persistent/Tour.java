@@ -34,6 +34,8 @@ public class Tour implements Parcelable{
     private String second_location;
     @DatabaseField
     private int tour_type;
+    @DatabaseField
+    private String title;
 
     /** A tour, that goes from point A to point B */
     public static final int TOUR_TYPE_PATH = 0;
@@ -52,6 +54,10 @@ public class Tour implements Parcelable{
 
     public Date getDate() {
         return date;
+    }
+
+    public String getTitle() {
+        return title;
     }
 
     /**
@@ -92,14 +98,13 @@ public class Tour implements Parcelable{
         this.tour_type = type;
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
     @Override
     public String toString(){
-        /*
-            When changing this implementation, check usages.
-            It is used in many places that can't handle line-breaks. Most of those
-            can be removed anyways...
-        */
-        return "Tour #"+id;
+        return this.title;
     }
 
     /*
@@ -130,6 +135,7 @@ public class Tour implements Parcelable{
         parcel.writeString(first_location);
         parcel.writeString(second_location);
         parcel.writeInt(tour_type);
+        parcel.writeString(title);
     }
 
     /**
@@ -141,5 +147,6 @@ public class Tour implements Parcelable{
         this.first_location = parcel.readString();
         this.second_location = parcel.readString();
         this.tour_type = parcel.readInt();
+        this.title = parcel.readString();
     }
 }
