@@ -1,12 +1,15 @@
 buildscript {
     repositories {
         jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:1.5.0'
+        classpath 'com.github.stephanenicolas.ormgap:ormgap-plugin:1.0.11'
     }
 }
 apply plugin: 'com.android.application'
+apply plugin: 'ormgap'
 
 repositories {
     jcenter()
