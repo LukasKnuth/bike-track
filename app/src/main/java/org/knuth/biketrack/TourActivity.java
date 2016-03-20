@@ -13,12 +13,14 @@ import android.provider.Settings;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.Toast;
 import com.echo.holographlibrary.Bar;
@@ -66,10 +68,10 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
     private ExpandableListView statistics;
     private LineGraph speed_graph;
     private Button start_stop;
-    /** ActionBar item, only shown when tracking to get back to {@code TrackingActivity} */
-    private MenuItem live_view;
-    private MenuItem map_menu_item;
-    private MenuItem stats_menu_item;
+    private MenuItem menu_item_map;
+    private MenuItem menu_item_records;
+    private MenuItem menu_item_live;
+    private MenuItem menu_item_edit;
 
     @Override
     public void onCreate(Bundle saved){
@@ -154,6 +156,7 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
      * Loads the data for the current tour from the DB and puts everything in an Adapter.
      */
     private static class StatisticLoader extends AsyncTaskLoader<ExpandableStatisticAdapter> {
+        // TODO refactor this into a) another class and b) to use Executor for multicore support!
 
         public static final int STATISTIC_LOADER_ID = 1;
         private final Tour load_tour;
@@ -403,13 +406,14 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
         track_service.putExtra(TrackingService.TOUR_KEY, current_tour);
         if (this.startService(track_service) != null){
             Toast.makeText(this, R.string.tourActivity_toast_startTracking, Toast.LENGTH_LONG).show();
-            live_view.setVisible(true);
+            menu_item_live.setVisible(true);
             Intent tracking_activity = new Intent(this, TrackingActivity.class);
             this.startActivity(tracking_activity);
             return true;
-        } else
+        } else {
             Log.e(Main.LOG_TAG, "Couldn't start tracking-service!");
-        return false;
+            return false;
+        }
     }
 
     /**
@@ -423,14 +427,16 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
         // Stop the service:
         if (this.stopService(new Intent(this, TrackingService.class))){
             Toast.makeText(this, R.string.tourActivity_toast_stopTracking, Toast.LENGTH_LONG).show();
-            live_view.setVisible(false);
-            map_menu_item.setVisible(true);
-            stats_menu_item.setVisible(true);
+            menu_item_live.setVisible(false);
+            menu_item_map.setVisible(true);
+            menu_item_edit.setVisible(true);
+            menu_item_records.setVisible(true);
             // TODO If we currently have internet access: http://developer.android.com/reference/android/location/Geocoder.html
             return true;
-        } else
+        } else {
             Log.e(Main.LOG_TAG, "Couldn't stopp tracking-service!");
-        return false;
+            return false;
+        }
     }
 
     /**
@@ -477,52 +483,55 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
         } else return true;
     }
 
+    private void editTour() {
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setText(current_tour.getTitle());
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(R.string.tourActivtiy_menu_edit)
+                .setView(input)
+                .setCancelable(true)
+                .setPositiveButton(R.string.tourActivity_dialog_save, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        current_tour.setTitle(input.getText().toString());
+                        try {
+                            Dao<Tour, Integer> dao = getHelper().getTourDao();
+                            dao.update(current_tour);
+                            setTitle(current_tour.getTitle());
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        } finally {
+                            dialogInterface.dismiss();
+                        }
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                    }
+                })
+                .create();
+        dialog.show();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        /*
-            NOT inflating menu currently.
-            See https://github.com/JakeWharton/ActionBarSherlock/issues/562
-        */ // TODO Remove the inflater code and the menu XML!
-        //this.getSupportMenuInflater().inflate(R.menu.tour_menu, menu);
-        stats_menu_item = menu.add(R.string.tourActivity_menu_showRecords)
-            .setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT)
-            .setIcon(android.R.drawable.ic_menu_sort_by_size)
-            .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem item) {
-                    showRecords(item);
-                    return true;
-                }
-            });
-        map_menu_item = menu.add(R.string.tourActivity_menu_showMap)
-            .setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT)
-            .setIcon(android.R.drawable.ic_menu_mapmode)
-            .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem item) {
-                    showMap(item);
-                    return true;
-                }
-            });
-        // Check if have a "real" tour and can use the map and statistics:
+        this.getMenuInflater().inflate(R.menu.tour_menu, menu);
+
+        menu_item_map = menu.findItem(R.id.tour_menu_map);
+        menu_item_records = menu.findItem(R.id.tour_menu_records);
+        menu_item_live = menu.findItem(R.id.tour_menu_live);
+        menu_item_edit = menu.findItem(R.id.tour_menu_edit);
+
         if (current_tour == Tour.UNSTORED_TOUR){
-            stats_menu_item.setVisible(false);
-            map_menu_item.setVisible(false);
+            menu_item_map.setVisible(false);
+            menu_item_records.setVisible(false);
+            menu_item_edit.setVisible(false);
         }
-        // Item to get back to the life-activity:
-        live_view = menu.add(R.string.tourActivtiy_menu_trackingActivity)
-            .setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_ALWAYS | MenuItem.SHOW_AS_ACTION_WITH_TEXT)
-            .setIcon(android.R.drawable.ic_menu_mylocation)
-            .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem item) {
-                    Intent tracking_activity = new Intent(TourActivity.this, TrackingActivity.class);
-                    TourActivity.this.startActivity(tracking_activity);
-                    return true;
-                }
-            }).setVisible(false);
         if (isTrackingServiceRunning(this)){
-            live_view.setVisible(true);
+            menu_item_live.setVisible(true);
         }
         return true;
     }
@@ -535,19 +544,23 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             case android.R.id.home:
                 onBackPressed();
                 return true;
+            case R.id.tour_menu_live:
+                this.startActivity(new Intent(this, TrackingActivity.class));
+                return true;
+            case R.id.tour_menu_map:
+                Intent map = new Intent(this, TrackMapActivity.class);
+                map.putExtra(TrackingService.TOUR_KEY, current_tour);
+                this.startActivity(map);
+                return true;
+            case R.id.tour_menu_records:
+                Intent records = new Intent(this, DatabaseActivity.class);
+                records.putExtra(TrackingService.TOUR_KEY, current_tour);
+                this.startActivity(records);
+                return true;
+            case R.id.tour_menu_edit:
+                editTour();
         }
         return false;
     }
 
-    public void showRecords(MenuItem v){
-        Intent i = new Intent(this, DatabaseActivity.class);
-        i.putExtra(TrackingService.TOUR_KEY, current_tour);
-        this.startActivity(i);
-    }
-
-    public void showMap(MenuItem v){
-        Intent i = new Intent(this, TrackMapActivity.class);
-        i.putExtra(TrackingService.TOUR_KEY, current_tour);
-        this.startActivity(i);
-    }
 }

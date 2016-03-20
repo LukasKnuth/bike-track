@@ -1,14 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
 
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:onClick="showRecords"
-          android:title="@string/tourActivity.menu.showRecords"
-          android:showAsAction="ifRoom|withText"
-          android:icon="@android:drawable/ic_menu_sort_by_size"
-          />
-    <item android:onClick="showMap"
+    <item android:id="@+id/tour_menu_map"
           android:title="@string/tourActivity.menu.showMap"
-          android:showAsAction="ifRoom|withText"
+          app:showAsAction="ifRoom|withText"
           android:icon="@android:drawable/ic_menu_mapmode"
+            />
+    <item android:id="@+id/tour_menu_live"
+          android:title="@string/tourActivtiy.menu.trackingActivity"
+          app:showAsAction="ifRoom|withText"
+          android:icon="@android:drawable/ic_menu_mylocation"
+          android:visible="false"
           />
+
+    <item android:id="@+id/tour_menu_edit"
+          android:title="@string/tourActivtiy.menu.edit"
+          app:showAsAction="never"
+          android:icon="@android:drawable/ic_menu_edit"
+          />
+    <item android:id="@+id/tour_menu_records"
+          android:title="@string/tourActivity.menu.showRecords"
+          app:showAsAction="never"
+          android:icon="@android:drawable/ic_menu_sort_by_size"
+            />
+
 </menu>

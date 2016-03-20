@@ -16,6 +16,7 @@
     <string name="tourActivity.menu.showRecords">Show records</string>
     <string name="tourActivity.menu.showMap">Show Track-Map</string>
     <string name="tourActivtiy.menu.trackingActivity">Show live info</string>
+    <string name="tourActivtiy.menu.edit">Edit Tour</string>
     <string name="tourActivity.general.newTour">New Tour</string>
     <string name="tourActivity.button.startTracking">Start tracking my position!</string>
     <string name="tourActivity.button.stopTracking">Stop tracking</string>
@@ -34,6 +35,7 @@
     <string name="tourActivity.toast.stopTracking">The drones are no longer following you.</string>
     <string name="tourActivity.dialog.gpsDisabled">GPS is currently disabled. You\'ll need to enable it.</string>
     <string name="tourActivity.dialog.gotoSettings">Settings</string>
+    <string name="tourActivity.dialog.save">Save</string>
 
     <string name="tracking.menu.take_photo">Take Photo</string>
 
