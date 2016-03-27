@@ -59,9 +59,6 @@ import java.util.List;
  */
 public class TourActivity extends BaseActivity implements LoaderManager.LoaderCallbacks<ExpandableStatisticAdapter>{
 
-    // TODO Cache the tour-statistics in the Database.
-    // TODO When we gain Internet access, check which (if any) tours need reverse-geocoding and do so...
-
     /** The tour which is currently shown on this Activity */
     private Tour current_tour;
 
@@ -431,7 +428,6 @@ public class TourActivity extends BaseActivity implements LoaderManager.LoaderCa
             menu_item_map.setVisible(true);
             menu_item_edit.setVisible(true);
             menu_item_records.setVisible(true);
-            // TODO If we currently have internet access: http://developer.android.com/reference/android/location/Geocoder.html
             return true;
         } else {
             Log.e(Main.LOG_TAG, "Couldn't stopp tracking-service!");

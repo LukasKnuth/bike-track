@@ -51,10 +51,26 @@ If you encounter any **problems or bugs**, please also *open a ticket* on the [I
 
 ## ToDo
 
-* Add charts for all collected data (AchartEngine, JavaDoc for ChartFactory).
-* Cache the calculated statistics in a new DB-table.
+**Prioritized:**
+
+* Add charts for all collected data (MPAndroidChart).
 * Make the TrackerService bind-able and use the messages to get the GPS-state.
-* Change Font to Roboto (http://developer.android.com/design/style/typography.html)
-* Add Photo-taking capabilities (Tour pictures, with GEO-Tags, etc)
-* New Tour-Activity and Main-Activity Listview layout (with the images above and some data about the tour)
+* Add capability to specify "goals" for a tour and the ability to track these goals during the tour (TTS to notify the user that he has/is about to archive one).
+* When finishing a tour, do a reverse-golookup to find out where the tour started and ended/if it was a round-tripp (http://developer.android.com/reference/android/location/Geocoder.html)
+* The Map-view needs some love:
+    * Update the Google Play integration to the newest version
+    * When opening the activity, zoom out so that the entire tour is visible and centered
+    * Use a different color for the track
+    * Don't reload the entire thing on config-changes
+* The service needs to be more robust:
+    * If GPS is disabled during a tour, notify the user (TTS? See below)
+    * Show a persistent notification for the duration of the tour to easily get back
+    * Handle device incapability's transparently (like no speed via GPS, use barometer for altitude, etz)
+* Materialize the entire design
 * On first application-launch, check the device-locale and guess measure-system
+* Cache the calculated statistics in a new DB-table.
+* Add Photo-taking capabilities (Tour pictures, with GEO-Tags, etc)
+* Add a server-component which displays the apps data on a remote browser
+    * Shows the tour-map
+    * Allows export/import of tours
+    * Shows the photos taken along the ride (see above)
