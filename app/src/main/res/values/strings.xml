@@ -12,6 +12,7 @@
     <string name="main.dialog.deleteTours">Are you sure that you want to delete all %s selected tours?</string>
     <string name="main.dialog.deleteTour">Are you sure that you want to delete "%s" ?"</string>
     <string name="main.toast.deleteSuccess">Successfully deleted %s tours</string>
+    <string name="main.listItem.tourDate">%1$s at %2$s</string>
 
     <string name="tourActivity.menu.showRecords">Show records</string>
     <string name="tourActivity.menu.showMap">Show Track-Map</string>

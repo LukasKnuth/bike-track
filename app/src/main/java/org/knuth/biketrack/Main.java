@@ -20,6 +20,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 import com.j256.ormlite.dao.Dao;
+import org.knuth.biketrack.adapter.simple.TourListAdapter;
 import org.knuth.biketrack.async.ToursLoader;
 import org.knuth.biketrack.persistent.LocationStamp;
 import org.knuth.biketrack.persistent.Tour;
@@ -45,9 +46,8 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
         setContentView(R.layout.main);
         tour_list = (ListView)this.findViewById(R.id.tour_list);
         tour_list.setOnItemClickListener(this);
-        tour_list.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
-        tour_adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_multiple_choice);
         tour_list.setMultiChoiceModeListener(this);
+        tour_adapter = new TourListAdapter(this);
         tour_list.setAdapter(tour_adapter);
         // Set the empty-view for the list:
         View empty_view = this.getLayoutInflater().inflate(R.layout.statistic_empty_view, null);

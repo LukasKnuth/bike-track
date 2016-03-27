@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <!-- Backgrounds. Convention: bgr.what.state -->
+    <color name="bgr.tourItem.normal">@android:color/transparent</color>
+    <color name="bgr.tourItem.selected">#66229988</color>
+
     <!-- Statistics. Convention: statistics.[type].[what] -->
     <color name="statistics.bar.uphill">#AA1122</color>
     <color name="statistics.bar.downhill">#99CC00</color>
