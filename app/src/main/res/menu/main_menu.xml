@@ -2,11 +2,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item android:id="@+id/main_menu_new"
-          android:title="@string/main.menu.newTour"
-          app:showAsAction="ifRoom|withText"
-          android:icon="@android:drawable/ic_menu_add"
-            />
     <item android:id="@+id/main_menu_settings"
           android:title="@string/main.menu.settings"
           app:showAsAction="collapseActionView"

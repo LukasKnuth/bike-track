@@ -31,30 +31,44 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<Collection<Tour>>, AbsListView.MultiChoiceModeListener, AdapterView.OnItemClickListener {
+public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<Collection<Tour>>, AbsListView.MultiChoiceModeListener, AdapterView.OnItemClickListener, View.OnClickListener {
 
     /** The Tag to use when logging from this application! */
     public static final String LOG_TAG = "BikeTrack";
 
-    private ListView tour_list;
-    private ArrayAdapter<Tour> tour_adapter;
+    private ListView tourList;
+    private View btnNewTour;
+    private ArrayAdapter<Tour> tourAdapter;
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        tour_list = (ListView)this.findViewById(R.id.tour_list);
-        tour_list.setOnItemClickListener(this);
-        tour_list.setMultiChoiceModeListener(this);
-        tour_adapter = new TourListAdapter(this);
-        tour_list.setAdapter(tour_adapter);
+        btnNewTour = findViewById(R.id.btn_new_tour);
+        tourList = (ListView) findViewById(R.id.tour_list);
+
+        btnNewTour.setOnClickListener(this);
+        tourList.setOnItemClickListener(this);
+        tourList.setMultiChoiceModeListener(this);
+        tourAdapter = new TourListAdapter(this);
+        tourList.setAdapter(tourAdapter);
         // Set the empty-view for the list:
         View empty_view = this.getLayoutInflater().inflate(R.layout.statistic_empty_view, null);
-        ((ViewGroup) tour_list.getParent()).addView(empty_view); // See http://stackoverflow.com/q/3727063/717341
-        tour_list.setEmptyView(empty_view);
+        ((ViewGroup) tourList.getParent()).addView(empty_view); // See http://stackoverflow.com/q/3727063/717341
+        tourList.setEmptyView(empty_view);
         // Load the content a-sync:
         this.getSupportLoaderManager().initLoader(ToursLoader.TOUR_LOADER_ID, null, this);
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()){
+            case R.id.btn_new_tour:
+                // Simply start the TourActivity without adding a tour-extra:
+                this.startActivity(new Intent(this, TourActivity.class));
+                return;
+        }
     }
 
     // ------------------------------ LOADER -----------------------------
@@ -70,13 +84,13 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
     @Override
     public void onLoadFinished(Loader<Collection<Tour>> collectionLoader, Collection<Tour> tours) {
         if (tours.size() > 0){
-            tour_adapter.clear();
+            tourAdapter.clear();
             for (Tour t : tours){
-                tour_adapter.add(t);
+                tourAdapter.add(t);
             }
         } else {
             // There are no tours, yet.
-            tour_list.getEmptyView().setVisibility(View.GONE);
+            tourList.getEmptyView().setVisibility(View.GONE);
         }
     }
 
@@ -88,12 +102,13 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
     @Override
     public boolean onCreateActionMode(ActionMode actionMode, Menu menu) {
         actionMode.getMenuInflater().inflate(R.menu.main_context_menu, menu);
+        btnNewTour.setVisibility(View.GONE);
         return true;
     }
 
     @Override
     public void onItemCheckedStateChanged(ActionMode actionMode, int position, long id, boolean checked) {
-        actionMode.setTitle(getString(R.string.main_actionbar_titleSelected, tour_list.getCheckedItemCount()));
+        actionMode.setTitle(getString(R.string.main_actionbar_titleSelected, tourList.getCheckedItemCount()));
     }
 
     @Override
@@ -106,9 +121,9 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
     public boolean onActionItemClicked(ActionMode actionMode, MenuItem item) {
         // Get all selected items:
         List<Tour> selected_tours = new ArrayList<Tour>();
-        for (int i = 0; i < tour_adapter.getCount(); i++) {
-            if (tour_list.getCheckedItemPositions().get(i)) {
-                selected_tours.add(tour_adapter.getItem(i));
+        for (int i = 0; i < tourAdapter.getCount(); i++) {
+            if (tourList.getCheckedItemPositions().get(i)) {
+                selected_tours.add(tourAdapter.getItem(i));
             }
         }
         // Action was clicked:
@@ -127,6 +142,7 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
     @Override
     public void onDestroyActionMode(ActionMode actionMode) {
         // Left contextual menu.
+        btnNewTour.setVisibility(View.VISIBLE);
     }
 
     // ------------------------ Action Bar normal -----------------------
@@ -141,10 +157,6 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
     public boolean onOptionsItemSelected(MenuItem item) {
         super.onOptionsItemSelected(item);
         switch (item.getItemId()){
-            case R.id.main_menu_new:
-                // Simply start the TourActivity without adding a tour-extra:
-                this.startActivity(new Intent(this, TourActivity.class));
-                return true;
             case R.id.main_menu_settings:
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
@@ -154,11 +166,11 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
     }
 
     /**
-     * Handle a selected item in the {@code tour_list}.
+     * Handle a selected item in the {@code tourList}.
      */
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
-        Tour tour = tour_adapter.getItem(pos);
+        Tour tour = tourAdapter.getItem(pos);
         Intent intent = new Intent(Main.this, TourActivity.class);
         intent.putExtra(TrackingService.TOUR_KEY, tour);
         startActivity(intent);
@@ -185,7 +197,7 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
                                         "WHERE tour_id = "+tour.getId());
                                 Log.v(LOG_TAG, "Deleted "+deleted2+" locationstamps from "+tour.toString());
                                 // Remove and animate:
-                                final View animate_me = tour_list.getChildAt(tour_adapter.getPosition(tour));
+                                final View animate_me = tourList.getChildAt(tourAdapter.getPosition(tour));
                                 Animation animation = AnimationUtils.loadAnimation(Main.this, android.R.anim.slide_out_right); // TODO Make it slide out LEFT
                                 animation.setAnimationListener(new Animation.AnimationListener() {
                                     @Override
@@ -200,8 +212,8 @@ public class Main extends BaseActivity implements LoaderManager.LoaderCallbacks<
                                             animate_me.clearAnimation();
                                         } else {
                                             // The finished animation has been canceled and is no really done.
-                                            tour_adapter.remove(tour);
-                                            tour_list.getEmptyView().setVisibility(View.GONE);
+                                            tourAdapter.remove(tour);
+                                            tourList.getEmptyView().setVisibility(View.GONE);
                                             // Notify the Loader that the data has changed:
                                             Main.this.getSupportLoaderManager().
                                                     getLoader(ToursLoader.TOUR_LOADER_ID).onContentChanged();
