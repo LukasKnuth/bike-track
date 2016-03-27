@@ -1,30 +1,4 @@
 # --table-start--
-dataClass=org.knuth.biketrack.persistent.Tour
-tableName=tours
-# --table-fields-start--
-# --field-start--
-fieldName=id
-generatedId=true
-# --field-end--
-# --field-start--
-fieldName=date
-# --field-end--
-# --field-start--
-fieldName=first_location
-# --field-end--
-# --field-start--
-fieldName=second_location
-# --field-end--
-# --field-start--
-fieldName=tour_type
-# --field-end--
-# --field-start--
-fieldName=title
-# --field-end--
-# --table-fields-end--
-# --table-end--
-#################################
-# --table-start--
 dataClass=org.knuth.biketrack.persistent.LocationStamp
 tableName=loc_stamp
 # --table-fields-start--
@@ -46,6 +20,32 @@ fieldName=speed
 # --field-start--
 fieldName=tour
 foreign=true
+# --field-end--
+# --table-fields-end--
+# --table-end--
+#################################
+# --table-start--
+dataClass=org.knuth.biketrack.persistent.Tour
+tableName=tours
+# --table-fields-start--
+# --field-start--
+fieldName=id
+generatedId=true
+# --field-end--
+# --field-start--
+fieldName=date
+# --field-end--
+# --field-start--
+fieldName=first_location
+# --field-end--
+# --field-start--
+fieldName=second_location
+# --field-end--
+# --field-start--
+fieldName=tour_type
+# --field-end--
+# --field-start--
+fieldName=title
 # --field-end--
 # --table-fields-end--
 # --table-end--
